@@ -216,6 +216,30 @@ class Switch(Base):
         self.assertIn("btop", out.split("failed")[-1])
         self.assertEqual(cr.active(self.rices()).slug, "noir")
 
+    def test_backups_keep_the_private_mode_of_the_original(self):
+        rc = self.home / ".zshrc"
+        rc.touch(mode=0o600)
+        conf = self.conf / "btop/btop.conf"
+        conf.parent.mkdir(parents=True)
+        conf.write_text('color_theme = "old"\n')
+        conf.chmod(0o600)
+        font = self.conf / "cosmic/com.system76.CosmicTerm/v1/font_size"
+        font.parent.mkdir(parents=True)
+        font.write_text("11")
+        font.chmod(0o600)
+        self.switch("noir")
+        for original in (rc, conf, font):
+            bak = original.with_name(original.name + ".bak")
+            self.assertEqual(stat.S_IMODE(bak.stat().st_mode), 0o600, bak.name)
+
+    def test_stale_open_backup_is_tightened(self):
+        rc = self.home / ".zshrc"
+        rc.touch(mode=0o600)
+        bak = self.home / ".zshrc.bak"
+        bak.touch(mode=0o644)
+        self.switch("noir")
+        self.assertEqual(stat.S_IMODE(bak.stat().st_mode), 0o600)
+
     def test_firefox_failure_is_only_a_skip(self):
         (self.noir / "firefox/install.sh").write_text("#!/usr/bin/env bash\nexit 1\n")
         ok, out = self.switch("noir")

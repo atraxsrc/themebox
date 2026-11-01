@@ -92,10 +92,19 @@ def value(path: Path) -> str:
     return path.read_text().replace('"', "").replace("\n", "") if path.is_file() else ""
 
 
+def backup(path: Path) -> None:
+    """Copy path to path.bak, never more readable than the original: ~/.zshrc can hold secrets."""
+    bak = path.with_name(path.name + ".bak")
+    bak.unlink(missing_ok=True)
+    with os.fdopen(os.open(bak, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as out, path.open("rb") as src:
+        shutil.copyfileobj(src, out)
+    shutil.copymode(path, bak)
+
+
 def backup_copy(src: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.is_file():
-        shutil.copyfile(dest, dest.with_name(dest.name + ".bak"))
+        backup(dest)
     shutil.copyfile(src, dest)
 
 
@@ -149,7 +158,7 @@ def apply_btop(rice: Rice) -> None:
     if not conf.is_file():
         print("  btop: theme copied, pick it in btop (Esc → Options → Color theme)")
         return
-    shutil.copyfile(conf, conf.with_name("btop.conf.bak"))
+    backup(conf)
     conf.write_text(re.sub(r"^color_theme = .*$", f'color_theme = "{rice.btop}"', conf.read_text(), flags=re.M))
     print(f"  btop: {rice.btop}")
 
@@ -169,7 +178,7 @@ def apply_zsh(rice: Rice) -> bool:
     """Comment out every other rice's source line, uncomment this one, or add it."""
     rc = Path.home() / ".zshrc"
     rc.touch()
-    shutil.copyfile(rc, rc.with_name(".zshrc.bak"))
+    backup(rc)
     own = f"cosmic-{rice.slug}-theme/zsh/{rice.slug}.zsh"
     lines = []
     for line in rc.read_text().splitlines(keepends=True):

@@ -36,6 +36,8 @@ def seed(home: Path, rices: list, target, prev) -> None:
     term.mkdir(parents=True)
     (term / "syntax_theme_dark").write_text('"Someone Else"')
     (term / "font_size").write_text("11")
+    (conf / "btop/btop.conf").chmod(0o600)
+    (home / ".zshrc").touch(mode=0o600)
     (home / ".zshrc").write_text(
         "export KEEP=1\n"
         f"source {prev.repo}/zsh/{prev.slug}.zsh\n"
@@ -51,7 +53,7 @@ def tree(home: Path) -> dict:
         if p.is_symlink():
             out[rel] = ("link", os.readlink(p))
         elif p.is_file():
-            out[rel] = ("file", p.read_bytes())
+            out[rel] = ("file", p.stat().st_mode, p.read_bytes())
     return out
 
 
