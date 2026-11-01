@@ -8,6 +8,7 @@
   cosmic-rice flip                 move to the other half and change everything live
   cosmic-rice choose <a> <b>       flip between these two, one dark and one light
   cosmic-rice choose --reset       flip between each rice's own pair again
+  cosmic-rice get <slug>           download a rice and its other half
   cosmic-rice install-shell        let flip reload open zsh shells
 
 The active rice is whichever repo ~/update_system.sh links into. Rices are found
@@ -31,6 +32,8 @@ PAIR = re.compile(r"https://github\.com/[^/\s]+/(cosmic-[a-z0-9]+-theme)")
 TOOLS = ("fastfetch", "lsd", "bat", "starship", "kitty", "alacritty", "wezterm", "ghostty",
          "delta", "lazygit", "helix", "gtk", "qt", "discord")
 LEGACY_NVIM = ("harbordark",)  # the old hand-installed spec, parked like any other
+GALLERY = "https://atraxsrc.github.io/cosmic-rices/"
+SOURCE = "https://github.com/atraxsrc"  # where cosmic-rice get downloads rices from
 FAILED = "failed:"  # marks a report line that makes flip exit 1
 WALLPAPER = re.compile(r'source: Path\("((?:[^"\\]|\\.)*)"\)')
 ZSH_SOURCE = r"^\s*#?\s*(?:source|\.)\s.*"
@@ -53,6 +56,13 @@ class Rice:
     pair: str | None = None
 
 
+def readme_pair(repo: Path) -> str | None:
+    """The other half's repo name, from the link above the palette in the README."""
+    readme = repo / "README.md"
+    head = readme.read_text().split("## Palette", 1)[0] if readme.is_file() else ""
+    return next((p for p in PAIR.findall(head) if p != repo.name), None)
+
+
 def discover(repos: Path) -> list[Rice]:
     rices, pairs = [], {}
     for repo in sorted(Path(repos).glob("cosmic-*-theme")):
@@ -61,9 +71,7 @@ def discover(repos: Path) -> list[Rice]:
             continue
         s = dict(SETTING.findall(script.read_text()))
         rices.append(Rice(repo, s["NAME"], s["SLUG"], s["MODE"], s["RON"], s["TERM_RON"], s["BTOP"]))
-        readme = repo / "README.md"
-        head = readme.read_text().split("## Palette", 1)[0] if readme.is_file() else ""
-        pairs[repo.name] = next((p for p in PAIR.findall(head) if p != repo.name), None)
+        pairs[repo.name] = readme_pair(repo)
     slugs = {r.repo.name: r.slug for r in rices}
     for r in rices:
         r.pair = slugs.get(pairs[r.repo.name])
@@ -271,6 +279,35 @@ def switch(rice: Rice, rices: list[Rice], keep_icons: bool = False, steps: bool 
     if failed:
         print(f"\nThese failed, see above: {', '.join(failed)}")
     return not failed
+
+
+def fetch(repos: Path, name: str) -> bool:
+    """Clone one rice repo. False if it was already here."""
+    target = repos / name
+    if target.is_dir():
+        print(f"{name} is already here")
+        return False
+    print(f"Downloading {name}")
+    repos.mkdir(parents=True, exist_ok=True)
+    done = subprocess.run(["git", "clone", "--quiet", "--depth", "1", "--", f"{SOURCE}/{name}", str(target)],
+                          stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                          env={**os.environ, "GIT_TERMINAL_PROMPT": "0"})
+    if done.returncode:
+        raise Error(f"could not download {name}: is that a rice? See {GALLERY}")
+    return True
+
+
+def get(repos: Path, wanted: str) -> None:
+    """Download a rice and its other half."""
+    slug = wanted.lower().replace(" ", "")
+    if not re.fullmatch(r"[a-z0-9]+", slug):
+        raise Error(f"{wanted!r} is not a rice name, see {GALLERY}")
+    name = f"cosmic-{slug}-theme"
+    fetch(repos, name)
+    other = readme_pair(repos / name)
+    if other:
+        fetch(repos, other)
+    print(f"Done. Next: cosmic-rice switch {slug}")
 
 
 def choice_file() -> Path:
@@ -507,14 +544,19 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("choose", help="flip between these two, one dark and one light")
     p.add_argument("rices", nargs="*", metavar="slug")
     p.add_argument("--reset", action="store_true", help="flip between each rice's own pair again")
+    p = sub.add_parser("get", help="download a rice and its other half")
+    p.add_argument("slug")
     sub.add_parser("install-shell", help="let flip reload open zsh shells")
     args = ap.parse_args(argv)
 
     repos = Path(os.environ.get("COSMIC_RICE_REPOS") or Path(__file__).resolve().parent.parent).resolve()
     try:
+        if args.command == "get":
+            get(repos, args.slug)
+            return 0
         rices = discover(repos)
         if not rices:
-            raise Error(f"no rices found in {repos}, set COSMIC_RICE_REPOS")
+            raise Error(f"no rices in {repos} yet: cosmic-rice get <slug>, see {GALLERY}")
         if args.command == "list":
             print_list(rices)
         elif args.command == "switch":

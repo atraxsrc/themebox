@@ -9,15 +9,32 @@ Flip the desktop to light and Noir becomes its light half, Dossier. Flip back an
 
 ![The Noir desktop beside the Dossier desktop, the dark and light halves of one pair](assets/pair.jpg)
 
-It needs Python 3.10+ and nothing else. Keep this repo next to the `cosmic-*-theme` repos.
+## Install
 
 ```bash
-ln -s "$PWD/cosmic_rice.py" ~/.local/bin/cosmic-rice
+curl -fsSL https://raw.githubusercontent.com/atraxsrc/cosmic-rice/master/install.sh | bash
+cosmic-rice get noir            # download a rice and its other half
+cosmic-rice switch noir         # make it active
 ```
+
+Then add Rice Flip in Settings → Desktop → Panel → Configure panel applets. It needs git, curl and
+Python 3.10+. Browse the rices in the [gallery](https://atraxsrc.github.io/cosmic-rices/); the name to use
+is the part of the repo name between `cosmic-` and `-theme`.
+
+Everything goes in `~/.local/share/cosmic-rice`, plus two files in `~/.local/bin` and one in
+`~/.local/share/applications`. Run the same command again to update. The applet is prebuilt for x86_64; on
+anything else the installer gives you the CLI, and `applet/install.sh` builds the applet from source.
+
+The applet is not in the COSMIC Store: Store apps run in a sandbox, and this one has to change your config
+files and reach your open shells.
+
+To work on it, clone this repo next to the `cosmic-*-theme` repos and link `cosmic_rice.py` into
+`~/.local/bin` as `cosmic-rice`.
 
 ## Use
 
 ```bash
+cosmic-rice get noir            # download a rice and its other half
 cosmic-rice list                # every rice, * marks the active one
 cosmic-rice switch noir         # make a rice active, --keep-icons leaves the icon theme alone
 cosmic-rice pair                # match the rice to COSMIC's light/dark setting, once
