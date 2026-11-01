@@ -2,7 +2,7 @@
   <img src="assets/logo.svg" alt="themebox logo: a moon and sun sharing one disc" width="200">
 </p>
 
-# themebox
+<h1 align="center">Themebox</h1>
 
 One command to list your [COSMIC rices](https://atraxsrc.github.io/cosmic-rices/), switch between them,
 and have the matching light or dark half follow COSMIC's toggle.
