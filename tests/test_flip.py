@@ -1,4 +1,4 @@
-"""cosmic-rice flip, with stub desktop commands first on PATH."""
+"""themebox flip, with stub desktop commands first on PATH."""
 import contextlib
 import io
 import os
@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import cosmic_rice as cr  # noqa: E402
+import themebox as cr  # noqa: E402
 from test_cli import Base  # noqa: E402
 
 ALL = '''(
@@ -229,7 +229,7 @@ class Report(FlipBase):
         self.assertFalse(any("COSMIC Terminal" in m for m in cr.leftovers(rice)))
 
     def test_flip_command_exit_codes(self):
-        env = {"COSMIC_RICE_REPOS": str(self.repos)}
+        env = {"THEMEBOX_REPOS": str(self.repos)}
         with unittest.mock.patch.dict(os.environ, env), contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(cr.main(["flip"]), 0)
             self.assertEqual(cr.active(self.rices()).slug, "dossier")
@@ -286,7 +286,7 @@ class Choose(FlipBase):
             self.assertEqual(cr.follow(self.rices()).slug, "k3day")
 
     def test_command_sets_and_resets(self):
-        env = {"COSMIC_RICE_REPOS": str(self.repos)}
+        env = {"THEMEBOX_REPOS": str(self.repos)}
         with unittest.mock.patch.dict(os.environ, env), contextlib.redirect_stdout(io.StringIO()) as out:
             self.assertEqual(cr.main(["choose", "noir", "k3day"]), 0)
             self.assertEqual(cr.partner(cr.find(self.rices(), "noir"), self.rices()).slug, "k3day")

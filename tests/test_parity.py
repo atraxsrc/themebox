@@ -12,9 +12,9 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-REPOS = Path(os.environ.get("COSMIC_RICE_REPOS") or ROOT.parent)
+REPOS = Path(os.environ.get("THEMEBOX_REPOS") or ROOT.parent)
 sys.path.insert(0, str(ROOT))
-import cosmic_rice as cr  # noqa: E402
+import themebox as cr  # noqa: E402
 
 PREVIOUS = "noir"  # in every old switch.sh list, so both sides park its nvim spec
 PREVIOUS_ALT = "darkgold"
@@ -59,7 +59,7 @@ def tree(home: Path) -> dict:
 
 def run(cmd: list, home: Path) -> None:
     env = {**os.environ, "HOME": str(home), "XDG_CONFIG_HOME": str(home / ".config"),
-           "COSMIC_RICE_REPOS": str(REPOS), "DBUS_SESSION_BUS_ADDRESS": "disabled:"}
+           "THEMEBOX_REPOS": str(REPOS), "DBUS_SESSION_BUS_ADDRESS": "disabled:"}
     done = subprocess.run(cmd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT, text=True)
     assert done.returncode == 0, f"{cmd}\n{done.stdout[-2000:]}"
@@ -81,7 +81,7 @@ class Parity(unittest.TestCase):
                 shutil.rmtree(home)
                 home.mkdir()
                 seed(home, rices, target, prev)
-                run([str(ROOT / "cosmic_rice.py"), "switch", target.slug], home)
+                run([str(ROOT / "themebox.py"), "switch", target.slug], home)
                 new = tree(home)
                 self.assertEqual(sorted(old), sorted(new))
                 self.assertEqual([k for k in old if old[k] != new[k]], [])

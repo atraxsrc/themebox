@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import cosmic_rice as cr  # noqa: E402
+import themebox as cr  # noqa: E402
 from test_flip import FlipBase  # noqa: E402
 
 SNIPPET = Path(cr.__file__).resolve().parent / "zsh/reload.zsh"
@@ -108,7 +108,7 @@ class Shell(FlipBase):
         sleeper = subprocess.Popen(["sleep", "30"])
         self.addCleanup(sleeper.wait)
         self.addCleanup(sleeper.kill)
-        d = self.run_dir / "cosmic-rice/zsh"
+        d = self.run_dir / "themebox/zsh"
         d.mkdir(parents=True)
         (d / str(sleeper.pid)).touch()
         (d / "999999").touch()

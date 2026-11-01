@@ -1,4 +1,4 @@
-//! A panel button that runs `cosmic-rice flip`. All the logic lives in the CLI.
+//! A panel button that runs `themebox flip`. All the logic lives in the CLI.
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
@@ -6,7 +6,7 @@ use cosmic::app::{Core, Task};
 use cosmic::cosmic_theme::ThemeMode;
 use cosmic::Element;
 
-const APP_ID: &str = "io.github.atraxsrc.CosmicRiceApplet";
+const APP_ID: &str = "io.github.atraxsrc.ThemeboxApplet";
 
 /// The icon for the current state: what the desktop is, or that a flip is running.
 fn icon_name(is_dark: bool, busy: bool) -> &'static str {
@@ -20,9 +20,9 @@ fn icon_name(is_dark: bool, busy: bool) -> &'static str {
 /// The installed command if it is in ~/.local/bin, otherwise whatever PATH finds.
 /// The panel's PATH often leaves out ~/.local/bin.
 fn flip_binary(home: Option<&Path>) -> PathBuf {
-    home.map(|h| h.join(".local/bin/cosmic-rice"))
+    home.map(|h| h.join(".local/bin/themebox"))
         .filter(|p| p.is_file())
-        .unwrap_or_else(|| PathBuf::from("cosmic-rice"))
+        .unwrap_or_else(|| PathBuf::from("themebox"))
 }
 
 async fn run_flip() -> bool {
@@ -126,14 +126,14 @@ mod tests {
     fn prefers_the_installed_command() {
         let home = std::env::temp_dir().join(format!("rice-applet-{}", std::process::id()));
         std::fs::create_dir_all(home.join(".local/bin")).unwrap();
-        std::fs::write(home.join(".local/bin/cosmic-rice"), "").unwrap();
-        assert_eq!(flip_binary(Some(&home)), home.join(".local/bin/cosmic-rice"));
+        std::fs::write(home.join(".local/bin/themebox"), "").unwrap();
+        assert_eq!(flip_binary(Some(&home)), home.join(".local/bin/themebox"));
         std::fs::remove_dir_all(&home).unwrap();
     }
 
     #[test]
     fn falls_back_to_path() {
-        assert_eq!(flip_binary(None), PathBuf::from("cosmic-rice"));
-        assert_eq!(flip_binary(Some(Path::new("/nonexistent"))), PathBuf::from("cosmic-rice"));
+        assert_eq!(flip_binary(None), PathBuf::from("themebox"));
+        assert_eq!(flip_binary(Some(Path::new("/nonexistent"))), PathBuf::from("themebox"));
     }
 }

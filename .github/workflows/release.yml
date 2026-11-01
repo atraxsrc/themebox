@@ -26,16 +26,16 @@ jobs:
         run: cargo build --release --locked
       - name: Package
         run: |
-          cp applet/target/release/cosmic-rice-applet cosmic-rice-applet-x86_64
-          strip cosmic-rice-applet-x86_64
-          cp cosmic-rice-applet-x86_64 cosmic-rice-applet
-          sha256sum cosmic-rice-applet > cosmic-rice-applet-x86_64.sha256
+          cp applet/target/release/themebox-applet themebox-applet-x86_64
+          strip themebox-applet-x86_64
+          cp themebox-applet-x86_64 themebox-applet
+          sha256sum themebox-applet > themebox-applet-x86_64.sha256
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: applet
           path: |
-            cosmic-rice-applet-x86_64
-            cosmic-rice-applet-x86_64.sha256
+            themebox-applet-x86_64
+            themebox-applet-x86_64.sha256
           if-no-files-found: error
 
   publish:
@@ -51,4 +51,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release create "$GITHUB_REF_NAME" cosmic-rice-applet-x86_64 cosmic-rice-applet-x86_64.sha256 --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" themebox-applet-x86_64 themebox-applet-x86_64.sha256 --generate-notes

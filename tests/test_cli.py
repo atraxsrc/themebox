@@ -1,4 +1,4 @@
-"""Behaviour of cosmic-rice against small fake rice repos in a temp HOME."""
+"""Behaviour of themebox against small fake rice repos in a temp HOME."""
 import contextlib
 import io
 import os
@@ -11,7 +11,7 @@ import unittest.mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import cosmic_rice as cr  # noqa: E402
+import themebox as cr  # noqa: E402
 
 INSTALLER = '#!/usr/bin/env bash\nset -e\necho "ran {tool}"\n{extra}'
 
@@ -287,7 +287,7 @@ class Pair(Base):
 class Cli(Base):
     def run_main(self, *argv):
         buf = io.StringIO()
-        with contextlib.redirect_stdout(buf), unittest.mock.patch.dict(os.environ, {"COSMIC_RICE_REPOS": str(self.repos)}):
+        with contextlib.redirect_stdout(buf), unittest.mock.patch.dict(os.environ, {"THEMEBOX_REPOS": str(self.repos)}):
             code = cr.main(list(argv))
         return code, buf.getvalue()
 
@@ -303,16 +303,16 @@ class Cli(Base):
     def test_relative_repos_folder_still_writes_an_absolute_link(self):
         os.chdir(self.root)
         self.addCleanup(os.chdir, Path(__file__).resolve().parent.parent)
-        with unittest.mock.patch.dict(os.environ, {"COSMIC_RICE_REPOS": "repos"}), \
+        with unittest.mock.patch.dict(os.environ, {"THEMEBOX_REPOS": "repos"}), \
                 contextlib.redirect_stdout(io.StringIO()):
             cr.main(["switch", "noir"])
         self.assertTrue(os.readlink(self.home / "update_system.sh").startswith("/"))
 
     def test_runs_through_a_symlink_like_the_installed_command(self):
         (self.root / "bin").mkdir()
-        link = self.root / "bin/cosmic-rice"
+        link = self.root / "bin/themebox"
         link.symlink_to(Path(cr.__file__).resolve())
-        env = {k: v for k, v in os.environ.items() if k != "COSMIC_RICE_REPOS"}
+        env = {k: v for k, v in os.environ.items() if k != "THEMEBOX_REPOS"}
         done = subprocess.run([str(link), "list"], env=env, capture_output=True, text=True)
         self.assertEqual(done.returncode, 0, done.stderr)
 

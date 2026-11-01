@@ -1,4 +1,4 @@
-"""cosmic-rice get against local git repos, and install.sh with a stub curl."""
+"""themebox get against local git repos, and install.sh with a stub curl."""
 import contextlib
 import hashlib
 import io
@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import cosmic_rice as cr  # noqa: E402
+import themebox as cr  # noqa: E402
 from test_cli import Base, fake_rice  # noqa: E402
 
 ROOT = Path(cr.__file__).resolve().parent
@@ -38,7 +38,7 @@ class Get(Base):
         patch = unittest.mock.patch.object(cr, "SOURCE", f"file://{self.upstream}")
         patch.start()
         self.addCleanup(patch.stop)
-        env = unittest.mock.patch.dict(os.environ, {"COSMIC_RICE_REPOS": str(self.empty), **ENV})
+        env = unittest.mock.patch.dict(os.environ, {"THEMEBOX_REPOS": str(self.empty), **ENV})
         env.start()
         self.addCleanup(env.stop)
 
@@ -56,7 +56,7 @@ class Get(Base):
         self.assertEqual(code, 0, out)
         self.assertEqual(sorted(p.name for p in self.empty.iterdir()),
                          ["cosmic-dossier-theme", "cosmic-noir-theme"])
-        self.assertIn("cosmic-rice switch noir", out)
+        self.assertIn("themebox switch noir", out)
 
     def test_get_works_from_nothing_and_list_then_sees_them(self):
         self.assertEqual(self.main("list")[0], 1)
@@ -112,7 +112,7 @@ class Installer(unittest.TestCase):
         self.stub("curl", f'''out=""
 while [ $# -gt 0 ]; do case "$1" in -o) out="$2"; shift;; esac; shift; done
 case "$out" in
-  *.sha256) echo "${{FAKE_SUM:-{self.sum}}}  cosmic-rice-applet" > "$out";;
+  *.sha256) echo "${{FAKE_SUM:-{self.sum}}}  themebox-applet" > "$out";;
   *) [ -n "$NO_RELEASE" ] && exit 22; cp "{self.binary}" "$out";;
 esac
 ''')
@@ -134,42 +134,42 @@ cp -r "{ROOT}" "$target"
     def test_installs_the_cli_and_the_applet(self):
         done = self.run_it()
         self.assertEqual(done.returncode, 0, done.stderr + done.stdout)
-        cli = self.home / ".local/bin/cosmic-rice"
+        cli = self.home / ".local/bin/themebox"
         self.assertTrue(cli.is_symlink())
-        self.assertTrue(cli.resolve().name == "cosmic_rice.py")
-        applet = self.home / ".local/bin/cosmic-rice-applet"
+        self.assertTrue(cli.resolve().name == "themebox.py")
+        applet = self.home / ".local/bin/themebox-applet"
         self.assertEqual(applet.read_bytes(), self.good)
         self.assertTrue(os.access(applet, os.X_OK))
-        entry = self.home / ".local/share/applications/io.github.atraxsrc.CosmicRiceApplet.desktop"
+        entry = self.home / ".local/share/applications/io.github.atraxsrc.ThemeboxApplet.desktop"
         self.assertIn(f"Exec={applet}", entry.read_text())
         self.assertIn("X-CosmicApplet=true", entry.read_text())
 
     def test_a_wrong_checksum_installs_no_binary(self):
         done = self.run_it(FAKE_SUM="0" * 64)
         self.assertNotEqual(done.returncode, 0)
-        self.assertFalse((self.home / ".local/bin/cosmic-rice-applet").exists())
+        self.assertFalse((self.home / ".local/bin/themebox-applet").exists())
 
     def test_another_architecture_still_gets_the_cli(self):
         done = self.run_it(FAKE_ARCH="aarch64")
         self.assertEqual(done.returncode, 0, done.stderr)
-        self.assertTrue((self.home / ".local/bin/cosmic-rice").is_symlink())
-        self.assertFalse((self.home / ".local/bin/cosmic-rice-applet").exists())
+        self.assertTrue((self.home / ".local/bin/themebox").is_symlink())
+        self.assertFalse((self.home / ".local/bin/themebox-applet").exists())
         self.assertIn("applet/install.sh", done.stdout)
 
     def test_no_release_yet_still_gets_the_cli(self):
         done = self.run_it(NO_RELEASE="1")
         self.assertEqual(done.returncode, 0, done.stderr)
-        self.assertTrue((self.home / ".local/bin/cosmic-rice").is_symlink())
+        self.assertTrue((self.home / ".local/bin/themebox").is_symlink())
         self.assertIn("applet/install.sh", done.stdout)
 
     def test_an_existing_command_elsewhere_is_left_alone(self):
         mine = self.root / "dev.py"
         mine.touch()
         (self.home / ".local/bin").mkdir(parents=True)
-        (self.home / ".local/bin/cosmic-rice").symlink_to(mine)
+        (self.home / ".local/bin/themebox").symlink_to(mine)
         done = self.run_it()
         self.assertEqual(done.returncode, 0, done.stderr)
-        self.assertEqual(os.readlink(self.home / ".local/bin/cosmic-rice"), str(mine))
+        self.assertEqual(os.readlink(self.home / ".local/bin/themebox"), str(mine))
 
     def test_running_twice_updates_in_place(self):
         self.run_it()

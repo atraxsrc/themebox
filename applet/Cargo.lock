@@ -996,7 +996,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmic-rice-applet"
+name = "themebox-applet"
 version = "0.1.0"
 dependencies = [
  "libcosmic",

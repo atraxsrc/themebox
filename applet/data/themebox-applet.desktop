@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=Rice Flip
+Name=Themebox
 Comment=Flip between the two halves of the current COSMIC rice
 Type=Application
-Exec=cosmic-rice-applet
+Exec=themebox-applet
 Terminal=false
 Categories=COSMIC;
 Keywords=COSMIC;Iced;

@@ -1,5 +1,5 @@
-# Lets cosmic-rice flip recolour this shell while it is open. Added to ~/.zshrc
-# by: cosmic-rice install-shell
+# Lets themebox flip recolour this shell while it is open. Added to ~/.zshrc
+# by: themebox install-shell
 [[ -o interactive && -n $XDG_RUNTIME_DIR ]] || return 0
 
 # USR1 reloads the active rice's zsh file. The rice is whichever repo the
@@ -17,9 +17,9 @@ TRAPUSR1() {
 
 # Registers this shell, after the trap exists. USR1 kills a zsh with no trap, so
 # flip signals only the shells listed here.
-_cosmic_rice_shells=$XDG_RUNTIME_DIR/cosmic-rice/zsh
-mkdir -p $_cosmic_rice_shells
-: > $_cosmic_rice_shells/$$
-_cosmic_rice_exit() { rm -f $_cosmic_rice_shells/$$ }
+_themebox_shells=$XDG_RUNTIME_DIR/themebox/zsh
+mkdir -p $_themebox_shells
+: > $_themebox_shells/$$
+_themebox_exit() { rm -f $_themebox_shells/$$ }
 autoload -Uz add-zsh-hook
-add-zsh-hook zshexit _cosmic_rice_exit
+add-zsh-hook zshexit _themebox_exit

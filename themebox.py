@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Switch between COSMIC rices: the cosmic-*-theme repos next to this one.
 
-  cosmic-rice list                 every rice, * marks the active one
-  cosmic-rice switch <slug>        make a rice active
-  cosmic-rice pair                 match the rice to COSMIC's light/dark toggle
-  cosmic-rice pair --watch         keep matching it
-  cosmic-rice flip                 move to the other half and change everything live
-  cosmic-rice choose <a> <b>       flip between these two, one dark and one light
-  cosmic-rice choose --reset       flip between each rice's own pair again
-  cosmic-rice get <slug>           download a rice and its other half
-  cosmic-rice install-shell        let flip reload open zsh shells
+  themebox list                 every rice, * marks the active one
+  themebox switch <slug>        make a rice active
+  themebox pair                 match the rice to COSMIC's light/dark toggle
+  themebox pair --watch         keep matching it
+  themebox flip                 move to the other half and change everything live
+  themebox choose <a> <b>       flip between these two, one dark and one light
+  themebox choose --reset       flip between each rice's own pair again
+  themebox get <slug>           download a rice and its other half
+  themebox install-shell        let flip reload open zsh shells
 
 The active rice is whichever repo ~/update_system.sh links into. Rices are found
-in COSMIC_RICE_REPOS, or else in the folder that holds this repo.
+in THEMEBOX_REPOS, or else in the folder that holds this repo.
 """
 import argparse
 import contextlib
@@ -33,7 +33,7 @@ TOOLS = ("fastfetch", "lsd", "bat", "starship", "kitty", "alacritty", "wezterm",
          "delta", "lazygit", "helix", "gtk", "qt", "discord")
 LEGACY_NVIM = ("harbordark",)  # the old hand-installed spec, parked like any other
 GALLERY = "https://atraxsrc.github.io/cosmic-rices/"
-SOURCE = "https://github.com/atraxsrc"  # where cosmic-rice get downloads rices from
+SOURCE = "https://github.com/atraxsrc"  # where themebox get downloads rices from
 FAILED = "failed:"  # marks a report line that makes flip exit 1
 WALLPAPER = re.compile(r'source: Path\("((?:[^"\\]|\\.)*)"\)')
 ZSH_SOURCE = r"^\s*#?\s*(?:source|\.)\s.*"
@@ -85,7 +85,7 @@ def find(rices: list[Rice], wanted: str) -> Rice:
     for r in rices:
         if key in (r.slug, r.name.lower().replace(" ", "")):
             return r
-    raise Error(f"no rice called {wanted!r}, see: cosmic-rice list")
+    raise Error(f"no rice called {wanted!r}, see: themebox list")
 
 
 def config_dir() -> Path:
@@ -307,15 +307,15 @@ def get(repos: Path, wanted: str) -> None:
     other = readme_pair(repos / name)
     if other:
         fetch(repos, other)
-    print(f"Done. Next: cosmic-rice switch {slug}")
+    print(f"Done. Next: themebox switch {slug}")
 
 
 def choice_file() -> Path:
-    return config_dir() / "cosmic-rice/choice"
+    return config_dir() / "themebox/choice"
 
 
 def chosen_pair(rices: list[Rice]) -> tuple[Rice, Rice] | None:
-    """The two rices picked with cosmic-rice choose, if both still exist."""
+    """The two rices picked with themebox choose, if both still exist."""
     path = choice_file()
     slugs = path.read_text().split() if path.is_file() else []
     found = [r for s in slugs for r in rices if r.slug == s]
@@ -346,7 +346,7 @@ def follow(rices: list[Rice], keep_icons: bool = False) -> Rice | None:
     """Move to the other half if COSMIC's mode no longer matches. Returns the rice moved to."""
     current = active(rices)
     if current is None:
-        raise Error("no active rice: run cosmic-rice switch <slug> once first")
+        raise Error("no active rice: run themebox switch <slug> once first")
     state = value(mode_file())
     if state not in ("true", "false") or ("dark" if state == "true" else "light") == current.mode:
         return None
@@ -469,9 +469,9 @@ def reload_zsh() -> list[str]:
     """Signal registered shells only: USR1 kills a zsh that has no trap for it."""
     rc = Path.home() / ".zshrc"
     if "zsh/reload.zsh" not in (rc.read_text() if rc.is_file() else ""):
-        return ["Open zsh shells: run cosmic-rice install-shell once, or exec zsh in each"]
+        return ["Open zsh shells: run themebox install-shell once, or exec zsh in each"]
     run = os.environ.get("XDG_RUNTIME_DIR")
-    folder = Path(run) / "cosmic-rice/zsh" if run else None
+    folder = Path(run) / "themebox/zsh" if run else None
     for entry in sorted(folder.iterdir()) if folder and folder.is_dir() else []:
         if not entry.name.isdigit():
             continue
@@ -494,14 +494,14 @@ def report(rice: Rice, messages: list[str]) -> None:
             print(f"  {m}")
     if shutil.which("notify-send"):
         body = "\n".join(messages) or "Nothing left to do."
-        run_quiet(["notify-send", "--app-name=cosmic-rice", f"{rice.name} is active", body])
+        run_quiet(["notify-send", "--app-name=themebox", f"{rice.name} is active", body])
 
 
 def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
     """Move to the other half and change everything live. False if any step failed."""
     current = active(rices)
     if current is None:
-        raise Error("no active rice: run cosmic-rice switch <slug> once first")
+        raise Error("no active rice: run themebox switch <slug> once first")
     target = partner(current, rices)
     if target is None:
         raise Error(f"{current.name} has no pair")
@@ -511,7 +511,7 @@ def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
         switched = switch(target, rices, keep_icons, steps=False)
     if not switched:
         print(log.getvalue())
-    messages = [] if switched else [f"{FAILED} some tools, run cosmic-rice flip in a terminal to see which"]
+    messages = [] if switched else [f"{FAILED} some tools, run themebox flip in a terminal to see which"]
     messages += apply_theme(target) + apply_wallpaper(target, current) + reload_nvim(target) + reload_zsh()
     messages += leftovers(target)
     report(target, messages)
@@ -529,7 +529,7 @@ def print_list(rices: list[Rice]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="cosmic-rice", description="Switch between COSMIC rices.")
+    ap = argparse.ArgumentParser(prog="themebox", description="Switch between COSMIC rices.")
     sub = ap.add_subparsers(dest="command", required=True)
     sub.add_parser("list", help="every rice, * marks the active one")
     p = sub.add_parser("switch", help="make a rice active")
@@ -549,14 +549,14 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("install-shell", help="let flip reload open zsh shells")
     args = ap.parse_args(argv)
 
-    repos = Path(os.environ.get("COSMIC_RICE_REPOS") or Path(__file__).resolve().parent.parent).resolve()
+    repos = Path(os.environ.get("THEMEBOX_REPOS") or Path(__file__).resolve().parent.parent).resolve()
     try:
         if args.command == "get":
             get(repos, args.slug)
             return 0
         rices = discover(repos)
         if not rices:
-            raise Error(f"no rices in {repos} yet: cosmic-rice get <slug>, see {GALLERY}")
+            raise Error(f"no rices in {repos} yet: themebox get <slug>, see {GALLERY}")
         if args.command == "list":
             print_list(rices)
         elif args.command == "switch":
@@ -569,7 +569,7 @@ def main(argv: list[str] | None = None) -> int:
                 choose(rices, *args.rices)
                 print(f"flip goes between {args.rices[0]} and {args.rices[1]}")
             else:
-                raise Error("usage: cosmic-rice choose <dark> <light>, or --reset")
+                raise Error("usage: themebox choose <dark> <light>, or --reset")
         elif args.command == "install-shell":
             print("Added to ~/.zshrc, new shells will reload" if install_shell() else "Already in ~/.zshrc")
         elif args.command == "flip":
@@ -581,7 +581,7 @@ def main(argv: list[str] | None = None) -> int:
         elif follow(rices, args.keep_icons) is None:
             print(f"{active(rices).name} already matches COSMIC's mode")
     except (Error, OSError) as err:
-        print(f"cosmic-rice: {err}", file=sys.stderr)
+        print(f"themebox: {err}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:
         pass
