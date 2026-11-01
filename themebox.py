@@ -3,6 +3,8 @@
 
   themebox list                 every rice, * marks the active one
   themebox switch <slug>        make a rice active
+  themebox wallpaper <slug>     list a rice's wallpapers
+  themebox wallpaper <slug> <n> save one as the wallpaper for that rice
   themebox pair                 match the rice to COSMIC's light/dark toggle
   themebox pair --watch         keep matching it
   themebox flip                 move to the other half and change everything live
@@ -233,9 +235,8 @@ def print_steps(rice: Rice) -> None:
   1. Settings → Desktop → Appearance → {Mode} → Import cosmic/{rice.ron}
   2. COSMIC Terminal → View → Color schemes → {Mode} tab → Import cosmic-term/{rice.term_ron}
   3. Firefox: enable this rice's add-on in about:addons (link in the README), restart Firefox
-  4. Settings → Wallpaper → a file from backgrounds/
-  5. Claude Desktop: Ctrl+Shift+T → {claude}, Appearance → {Mode}
-  6. exec zsh, restart Neovim
+  4. Claude Desktop: Ctrl+Shift+T → {claude}, Appearance → {Mode}
+  5. exec zsh, restart Neovim
   Cursor (optional, sudo + reboot): ./cursors/install.sh""")
     for tg in sorted(r.glob("telegram/*.tdesktop-theme")):
         print(f"  Telegram (optional): Settings → Chat Settings → Chat wallpaper → Choose from file → {tg.relative_to(r)}")
@@ -375,46 +376,113 @@ def apply_theme(rice: Rice) -> list[str]:
     return [f"{FAILED} theme import, in Settings → Desktop → Appearance import {path}"]
 
 
-def pick_wallpaper(rice: Rice, previous: Rice, current: str) -> Path | None:
-    """The same subject on the other half if there is one, else anime, else the first file."""
-    folder = rice.repo / "backgrounds"
-    files = sorted(p for p in folder.glob("*") if p.is_file())
-    now = Path(current)
-    prefix = f"{previous.slug}-"
-    if now.parent == previous.repo / "backgrounds" and now.name.startswith(prefix):
-        same = folder / f"{rice.slug}-{now.name[len(prefix):]}"
-        if same.is_file():
-            return same
-    anime = folder / f"{rice.slug}-anime.png"
+def backgrounds(rice: Rice) -> list[Path]:
+    return sorted(p for p in (rice.repo / "backgrounds").glob("*") if p.is_file())
+
+
+def short_name(rice: Rice, path: Path) -> str:
+    return path.stem.removeprefix(f"{rice.slug}-")
+
+
+def find_wallpaper(rice: Rice, wanted: str) -> Path | None:
+    for path in backgrounds(rice):
+        if wanted in (path.name, path.stem, short_name(rice, path)):
+            return path
+    return None
+
+
+def memory_file(rice: Rice) -> Path:
+    return choice_file().parent / "wallpapers" / rice.slug
+
+
+def remember(rice: Rice, wallpaper: str) -> None:
+    memory_file(rice).parent.mkdir(parents=True, exist_ok=True)
+    memory_file(rice).write_text(wallpaper)
+
+
+def remembered(rice: Rice) -> Path | None:
+    path = memory_file(rice)
+    return Path(path.read_text()) if path.is_file() else None
+
+
+def desktop_wallpaper() -> str | None:
+    entry = config_dir() / "cosmic/com.system76.CosmicBackground/v1/all"
+    found = WALLPAPER.search(entry.read_text()) if entry.is_file() else None
+    return found.group(1).replace("\\\\", "\\") if found else None
+
+
+def pick_wallpaper(rice: Rice) -> Path | None:
+    """The default: the rice's anime wallpaper, else its first file."""
+    anime = rice.repo / "backgrounds" / f"{rice.slug}-anime.png"
     if anime.is_file():
         return anime
+    files = backgrounds(rice)
     return files[0] if files else None
 
 
-def apply_wallpaper(rice: Rice, previous: Rice) -> list[str]:
-    """Change only the path in cosmic-bg's entry for all monitors."""
+def apply_wallpaper(rice: Rice, previous: Rice | None, chosen: Path | None = None) -> list[str]:
+    """Change only the path in cosmic-bg's entry for all monitors.
+
+    Uses chosen if given, else what this rice last had, else its default.
+    Staying on the same rice keeps the wallpaper unless one was chosen.
+    """
     folder = config_dir() / "cosmic/com.system76.CosmicBackground/v1"
     manual = f"Wallpaper: Settings → Wallpaper → a file from {rice.repo}/backgrounds"
     entry = folder / "all"
     if value(folder / "same-on-all") == "false" or not entry.is_file():
         return [manual]
     text = entry.read_text()
-    found = WALLPAPER.search(text)
-    if not found:
+    current = desktop_wallpaper()
+    if current is None:
         return [manual]
-    current = found.group(1).replace("\\\\", "\\")
-    memory = choice_file().parent / "wallpapers"
-    memory.mkdir(parents=True, exist_ok=True)
-    (memory / previous.slug).write_text(current)
-    kept = memory / rice.slug
-    remembered = Path(kept.read_text()) if kept.is_file() else None
-    chosen = remembered if remembered and remembered.is_file() else pick_wallpaper(rice, previous, current)
+    if chosen is None and previous == rice:
+        return []
+    if previous:
+        remember(previous, current)
+    kept = remembered(rice)
+    chosen = chosen or (kept if kept and kept.is_file() else pick_wallpaper(rice))
     if chosen is None:
         return []
     escaped = str(chosen).replace("\\", "\\\\").replace('"', '\\"')
     backup(entry)
     entry.write_text(WALLPAPER.sub(lambda _: f'source: Path("{escaped}")', text, count=1))
     return []
+
+
+def save_wallpaper(rice: Rice, path: Path, is_active: bool) -> list[str]:
+    """Keep this wallpaper for the rice, and show it now if the rice is active."""
+    remember(rice, str(path))
+    return apply_wallpaper(rice, None, path) if is_active else []
+
+
+def print_wallpapers(rice: Rice, is_active: bool) -> None:
+    """The rice's wallpapers by short name, * marks the one in use or saved."""
+    marked = desktop_wallpaper() if is_active else remembered(rice)
+    for path in backgrounds(rice):
+        print(f"{'*' if str(path) == str(marked) else ' '} {short_name(rice, path)}")
+
+
+def ask_wallpaper(rice: Rice) -> Path | None:
+    """Prompt for one of the rice's wallpapers. None keeps the saved one."""
+    files = backgrounds(rice)
+    if not files:
+        return None
+    print(f"Wallpapers for {rice.name}:")
+    for number, path in enumerate(files, 1):
+        print(f"  {number}. {short_name(rice, path)}")
+    while True:
+        try:
+            answer = input("Number or name, Enter keeps the saved one: ").strip()
+        except EOFError:
+            raise Error("--pick needs a terminal") from None
+        if not answer:
+            return None
+        if answer.isdigit() and 1 <= int(answer) <= len(files):
+            return files[int(answer) - 1]
+        found = find_wallpaper(rice, answer)
+        if found:
+            return found
+        print(f"No wallpaper {answer}")
 
 
 def leftovers(rice: Rice) -> list[str]:
@@ -497,7 +565,7 @@ def report(rice: Rice, messages: list[str]) -> None:
         run_quiet(["notify-send", "--app-name=themebox", f"{rice.name} is active", body])
 
 
-def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
+def flip(rices: list[Rice], keep_icons: bool = False, pick: bool = False) -> bool:
     """Move to the other half and change everything live. False if any step failed."""
     current = active(rices)
     if current is None:
@@ -505,6 +573,7 @@ def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
     target = partner(current, rices)
     if target is None:
         raise Error(f"{current.name} has no pair")
+    chosen = ask_wallpaper(target) if pick else None
     # switch comes first so a running pair --watch already sees the new half
     log = io.StringIO()
     with contextlib.redirect_stdout(log):
@@ -512,7 +581,7 @@ def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
     if not switched:
         print(log.getvalue())
     messages = [] if switched else [f"{FAILED} some tools, run themebox flip in a terminal to see which"]
-    messages += apply_theme(target) + apply_wallpaper(target, current) + reload_nvim(target) + reload_zsh()
+    messages += apply_theme(target) + apply_wallpaper(target, current, chosen) + reload_nvim(target) + reload_zsh()
     messages += leftovers(target)
     report(target, messages)
     return not any(m.startswith(FAILED) for m in messages)
@@ -535,12 +604,17 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("switch", help="make a rice active")
     p.add_argument("slug")
     p.add_argument("--keep-icons", action="store_true", help="leave the current icon theme alone")
+    p.add_argument("--pick", action="store_true", help="choose the wallpaper from a list")
+    p = sub.add_parser("wallpaper", help="list a rice's wallpapers, or save one for it")
+    p.add_argument("slug")
+    p.add_argument("name", nargs="?", help="the wallpaper to save, as listed")
     p = sub.add_parser("pair", help="match the rice to COSMIC's light/dark toggle")
     p.add_argument("--watch", action="store_true", help="keep following the toggle")
     p.add_argument("--keep-icons", action="store_true", help="leave the current icon theme alone")
     p.add_argument("--interval", type=float, default=2.0, help="seconds between checks with --watch")
     p = sub.add_parser("flip", help="move to the other half and change everything live")
     p.add_argument("--keep-icons", action="store_true", help="leave the current icon theme alone")
+    p.add_argument("--pick", action="store_true", help="choose the wallpaper from a list")
     p = sub.add_parser("choose", help="flip between these two, one dark and one light")
     p.add_argument("rices", nargs="*", metavar="slug")
     p.add_argument("--reset", action="store_true", help="flip between each rice's own pair again")
@@ -560,7 +634,23 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "list":
             print_list(rices)
         elif args.command == "switch":
-            return 0 if switch(find(rices, args.slug), rices, args.keep_icons) else 1
+            target, previous = find(rices, args.slug), active(rices)
+            chosen = ask_wallpaper(target) if args.pick else None
+            ok = switch(target, rices, args.keep_icons)
+            for message in apply_wallpaper(target, previous, chosen):
+                print(f"  {message}")
+            return 0 if ok else 1
+        elif args.command == "wallpaper":
+            rice = find(rices, args.slug)
+            is_active = rice == active(rices)
+            if args.name is None:
+                print_wallpapers(rice, is_active)
+                return 0
+            path = find_wallpaper(rice, args.name)
+            if path is None:
+                raise Error(f"{rice.name} has no wallpaper {args.name}: themebox wallpaper {rice.slug} lists them")
+            for message in save_wallpaper(rice, path, is_active):
+                print(f"  {message}")
         elif args.command == "choose":
             if args.reset:
                 reset_choice()
@@ -573,7 +663,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "install-shell":
             print("Added to ~/.zshrc, new shells will reload" if install_shell() else "Already in ~/.zshrc")
         elif args.command == "flip":
-            return 0 if flip(rices, args.keep_icons) else 1
+            return 0 if flip(rices, args.keep_icons, args.pick) else 1
         elif args.watch:
             while True:
                 follow(rices, args.keep_icons)

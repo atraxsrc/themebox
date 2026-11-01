@@ -109,10 +109,10 @@ class Theme(FlipBase):
 class Wallpaper(FlipBase):
     def pick(self, current):
         rices = self.rices()
-        return cr.pick_wallpaper(cr.find(rices, "dossier"), cr.find(rices, "noir"), current)
+        return cr.pick_wallpaper(cr.find(rices, "dossier"))
 
-    def test_same_subject_is_kept(self):
-        self.assertEqual(self.pick(f"{self.noir}/backgrounds/noir-city.png").name, "dossier-city.png")
+    def test_anime_wins_even_when_the_other_half_has_the_same_subject(self):
+        self.assertEqual(self.pick(f"{self.noir}/backgrounds/noir-city.png").name, "dossier-anime.png")
 
     def test_missing_subject_falls_back_to_anime_then_first(self):
         self.assertEqual(self.pick(f"{self.noir}/backgrounds/noir-rain.png").name, "dossier-anime.png")
@@ -185,6 +185,111 @@ class Wallpaper(FlipBase):
         msgs = cr.apply_wallpaper(cr.find(rices, "dossier"), cr.find(rices, "noir"))
         self.assertEqual((self.bg / "all").read_text(), ALL)
         self.assertIn("Wallpaper", msgs[0])
+
+
+class Choosing(FlipBase):
+    def current(self):
+        return cr.WALLPAPER.search((self.bg / "all").read_text()).group(1)
+
+    def wall(self, repo, slug, subject):
+        return str(repo / f"backgrounds/{slug}-{subject}.png")
+
+    def main(self, *args, answers=()):
+        env = {"THEMEBOX_REPOS": str(self.repos)}
+        with unittest.mock.patch.dict(os.environ, env), contextlib.redirect_stdout(io.StringIO()) as out, \
+                unittest.mock.patch("builtins.input", side_effect=list(answers) or EOFError):
+            code = cr.main(list(args))
+        return code, out.getvalue()
+
+    def test_list_shows_short_names_and_marks_the_one_in_use(self):
+        (self.bg / "all").write_text(ALL.replace("/old/place/wall.png", self.wall(self.noir, "noir", "city")))
+        code, out = self.main("wallpaper", "noir")
+        self.assertEqual(code, 0)
+        self.assertEqual(out.split("\n")[:2], ["  anime", "* city"])
+
+    def test_saving_for_the_active_rice_changes_it_now(self):
+        self.assertEqual(self.main("wallpaper", "noir", "city")[0], 0)
+        self.assertEqual(self.current(), self.wall(self.noir, "noir", "city"))
+
+    def test_saving_for_another_rice_waits_for_the_flip(self):
+        self.main("wallpaper", "dossier", "city")
+        self.assertEqual(self.current(), "/old/place/wall.png")
+        self.flip()
+        self.assertEqual(self.current(), self.wall(self.dossier, "dossier", "city"))
+
+    def test_list_marks_the_saved_one_for_another_rice(self):
+        self.main("wallpaper", "dossier", "city")
+        self.assertEqual(self.main("wallpaper", "dossier")[1].split("\n")[:2], ["  anime", "* city"])
+
+    def test_saved_wallpaper_survives_a_round_trip(self):
+        self.main("wallpaper", "noir", "city")
+        self.flip()
+        self.flip()
+        self.assertEqual(self.current(), self.wall(self.noir, "noir", "city"))
+
+    def test_unknown_wallpaper_is_refused(self):
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            self.assertEqual(self.main("wallpaper", "noir", "nope")[0], 1)
+        self.assertIn("nope", err.getvalue())
+
+    def test_switch_applies_the_saved_wallpaper(self):
+        self.main("wallpaper", "dossier", "city")
+        self.assertEqual(self.main("switch", "dossier")[0], 0)
+        self.assertEqual(self.current(), self.wall(self.dossier, "dossier", "city"))
+
+    def test_switch_with_nothing_saved_picks_like_flip(self):
+        self.main("switch", "dossier")
+        self.assertEqual(self.current(), self.wall(self.dossier, "dossier", "anime"))
+
+    def test_switch_remembers_the_wallpaper_it_left(self):
+        self.main("wallpaper", "noir", "city")
+        self.main("switch", "dossier")
+        self.main("switch", "noir")
+        self.assertEqual(self.current(), self.wall(self.noir, "noir", "city"))
+
+    def test_switch_to_the_active_rice_keeps_the_wallpaper(self):
+        self.main("switch", "noir")
+        self.assertEqual(self.current(), "/old/place/wall.png")
+
+    def test_first_switch_with_no_active_rice_works(self):
+        (self.home / "update_system.sh").unlink()
+        self.assertEqual(self.main("switch", "dossier")[0], 0)
+        self.assertEqual(self.current(), self.wall(self.dossier, "dossier", "anime"))
+
+    def test_switch_no_longer_lists_wallpaper_as_a_step(self):
+        self.assertNotIn("Settings → Wallpaper", self.main("switch", "dossier")[1])
+
+    def test_switch_says_so_when_it_cannot_set_the_wallpaper(self):
+        (self.bg / "same-on-all").write_text("false")
+        self.assertIn("Settings → Wallpaper", self.main("switch", "dossier")[1])
+
+    def test_switch_pick_uses_the_number_typed(self):
+        self.main("switch", "dossier", "--pick", answers=["2"])
+        self.assertEqual(self.current(), self.wall(self.dossier, "dossier", "city"))
+
+    def test_flip_pick_uses_the_number_typed(self):
+        self.main("flip", "--pick", answers=["2"])
+        self.assertEqual(self.current(), self.wall(self.dossier, "dossier", "city"))
+
+    def test_pick_accepts_a_name_and_asks_again_after_a_bad_answer(self):
+        self.main("switch", "dossier", "--pick", answers=["9", "city"])
+        self.assertEqual(self.current(), self.wall(self.dossier, "dossier", "city"))
+
+    def test_pick_enter_keeps_the_saved_one(self):
+        self.main("wallpaper", "dossier", "city")
+        self.main("switch", "dossier", "--pick", answers=[""])
+        self.assertEqual(self.current(), self.wall(self.dossier, "dossier", "city"))
+
+    def test_pick_without_a_terminal_is_refused_before_anything_changes(self):
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            self.assertEqual(self.main("switch", "dossier", "--pick")[0], 1)
+        self.assertIn("terminal", err.getvalue())
+        self.assertEqual(cr.active(self.rices()).slug, "noir")
+
+    def test_pick_with_no_backgrounds_does_not_ask(self):
+        for f in (self.dossier / "backgrounds").iterdir():
+            f.unlink()
+        self.assertEqual(self.main("switch", "dossier", "--pick")[0], 0)
 
 
 class Report(FlipBase):

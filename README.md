@@ -1,3 +1,5 @@
+<img src="assets/logo.svg" alt="themebox logo: a moon and sun sharing one disc" width="96">
+
 # themebox
 
 One command to list your [COSMIC rices](https://atraxsrc.github.io/cosmic-rices/), switch between them,
@@ -38,9 +40,12 @@ To work on it, clone this repo next to the `cosmic-*-theme` repos and link `them
 themebox get noir            # download a rice and its other half
 themebox list                # every rice, * marks the active one
 themebox switch noir         # make a rice active, --keep-icons leaves the icon theme alone
+themebox wallpaper noir      # list a rice's wallpapers
+themebox wallpaper noir city # save one for that rice
 themebox pair                # match the rice to COSMIC's light/dark setting, once
 themebox pair --watch        # keep matching it
 themebox flip                # move to the other half and change everything live
+themebox switch noir --pick  # choose the wallpaper from a list, works on flip too
 themebox choose noir k3day   # flip between these two instead of a rice's own pair
 themebox choose --reset      # back to each rice's own pair
 themebox install-shell       # once: let flip reload open zsh shells
@@ -50,6 +55,11 @@ themebox install-shell       # once: let flip reload open zsh shells
 sets the matching wallpaper, recolours running Neovims and reloads registered zsh shells. Then it sends
 a notification with whatever is left, such as the Firefox add-on. It replaces COSMIC's stored theme for
 that mode, so changes made in Settings are lost on the next flip.
+
+`switch` and `flip` set each rice's wallpaper. It's the one you saved with `themebox wallpaper`, or the
+one the rice had when you last left it, or else its anime wallpaper. Changing the wallpaper in Settings
+counts too: it's what you come back to next time. The applet can't show a list, so it always uses the
+saved one. With different wallpapers per monitor, themebox leaves them alone and tells you to pick by hand.
 
 `install-shell` adds one line to `~/.zshrc`. Terminals opened before that line existed are not reloaded.
 Nothing is closed either way.
