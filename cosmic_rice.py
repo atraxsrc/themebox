@@ -349,6 +349,22 @@ def leftovers(rice: Rice) -> list[str]:
     return steps
 
 
+def nvim_sockets() -> list[Path]:
+    """Every running Neovim's default socket for this user."""
+    run = os.environ.get("XDG_RUNTIME_DIR")
+    return sorted(p for p in Path(run).rglob("nvim.*") if not p.is_dir()) if run else []
+
+
+def reload_nvim(rice: Rice) -> list[str]:
+    """Recolour running Neovims. One that has gone away just fails quietly."""
+    colors = sorted((rice.repo / "nvim/colors").glob("*.lua"))
+    if colors:
+        expr = f"execute('colorscheme {colors[0].stem}')"
+        for sock in nvim_sockets():
+            run_quiet(["nvim", "--server", str(sock), "--remote-expr", expr], timeout=5)
+    return []
+
+
 def report(rice: Rice, messages: list[str]) -> None:
     print(f"\n{rice.name} is active.")
     if messages:
@@ -371,7 +387,7 @@ def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
     # switch comes first so a running pair --watch already sees the new half
     messages = [] if switch(target, rices, keep_icons, steps=False) else [
         f"{FAILED} some tools, run cosmic-rice flip in a terminal to see which"]
-    messages += apply_theme(target) + apply_wallpaper(target, current) + leftovers(target)
+    messages += apply_theme(target) + apply_wallpaper(target, current) + reload_nvim(target) + leftovers(target)
     report(target, messages)
     return not any(m.startswith(FAILED) for m in messages)
 

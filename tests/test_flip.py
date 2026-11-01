@@ -34,7 +34,11 @@ class FlipBase(Base):
         for name in ("cosmic-settings", "notify-send"):
             self.stub(name, f'echo "{name} $* | $(readlink "$HOME/update_system.sh") | '
                             f'$(cat "$HOME/.config/cosmic/com.system76.CosmicTheme.Mode/v1/is_dark")" >> "{self.log}"\n')
-        patch = unittest.mock.patch.dict(os.environ, {"PATH": f"{self.bin}:{os.environ['PATH']}"})
+        self.run_dir = self.root / "run"
+        self.run_dir.mkdir()
+        self.stub("nvim", f'echo "nvim $*" >> "{self.log}"\n')
+        patch = unittest.mock.patch.dict(os.environ, {"PATH": f"{self.bin}:{os.environ['PATH']}",
+                                                      "XDG_RUNTIME_DIR": str(self.run_dir)})
         patch.start()
         self.addCleanup(patch.stop)
         for repo, slug, name in ((self.noir, "noir", "Noir"), (self.dossier, "dossier", "Dossier")):
@@ -141,7 +145,7 @@ class Wallpaper(FlipBase):
         self.assertTrue((self.bg / "all.bak").is_file())
 
     def test_an_escaped_path_can_be_read_back(self):
-        (self.bg / "all").write_text(ALL.replace("/old/place/wall.png", "/a\\\\b.png"))
+        (self.bg / "all").write_text(ALL.replace("/old/place/wall.png", "/a\\\"b.png"))
         rices = self.rices()
         self.assertEqual(cr.apply_wallpaper(cr.find(rices, "dossier"), cr.find(rices, "noir")), [])
         self.assertIn("dossier-anime.png", (self.bg / "all").read_text())
@@ -181,6 +185,39 @@ class Report(FlipBase):
             self.assertEqual(cr.active(self.rices()).slug, "dossier")
             self.stub("cosmic-settings", "", code=1)
             self.assertEqual(cr.main(["flip"]), 1)
+
+
+class Nvim(FlipBase):
+    def setUp(self):
+        super().setUp()
+        (self.run_dir / "nvim.me/abc").mkdir(parents=True)
+        (self.run_dir / "nvim.me/abc/nvim.1.0").touch()
+        (self.run_dir / "nvim.2.0").touch()
+        (self.dossier / "nvim/colors").mkdir()
+        (self.dossier / "nvim/colors/dossier.lua").touch()
+
+    def test_each_socket_gets_the_colorscheme(self):
+        self.assertEqual(cr.reload_nvim(cr.find(self.rices(), "dossier")), [])
+        lines = [x for x in self.stub_log().splitlines() if x.startswith("nvim")]
+        self.assertEqual(len(lines), 2)
+        for line in lines:
+            self.assertIn("--server", line)
+            self.assertIn("execute('colorscheme dossier')", line)
+
+    def test_dead_socket_is_skipped(self):
+        self.stub("nvim", "", code=1)
+        self.assertEqual(cr.reload_nvim(cr.find(self.rices(), "dossier")), [])
+
+    def test_no_runtime_dir_or_colors_is_quiet(self):
+        with unittest.mock.patch.dict(os.environ):
+            del os.environ["XDG_RUNTIME_DIR"]
+            self.assertEqual(cr.nvim_sockets(), [])
+        self.assertEqual(cr.reload_nvim(cr.find(self.rices(), "noir")), [])
+        self.assertEqual(self.stub_log().count("nvim --server"), 0)
+
+    def test_flip_reloads_nvim(self):
+        self.flip()
+        self.assertIn("colorscheme dossier", self.stub_log())
 
 
 if __name__ == "__main__":
