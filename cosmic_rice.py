@@ -455,7 +455,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("install-shell", help="let flip reload open zsh shells")
     args = ap.parse_args(argv)
 
-    repos = Path(os.environ.get("COSMIC_RICE_REPOS") or Path(__file__).parent.parent).resolve()
+    repos = Path(os.environ.get("COSMIC_RICE_REPOS") or Path(__file__).resolve().parent.parent).resolve()
     try:
         rices = discover(repos)
         if not rices:

@@ -3,6 +3,7 @@ import contextlib
 import io
 import os
 import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -306,6 +307,14 @@ class Cli(Base):
                 contextlib.redirect_stdout(io.StringIO()):
             cr.main(["switch", "noir"])
         self.assertTrue(os.readlink(self.home / "update_system.sh").startswith("/"))
+
+    def test_runs_through_a_symlink_like_the_installed_command(self):
+        (self.root / "bin").mkdir()
+        link = self.root / "bin/cosmic-rice"
+        link.symlink_to(Path(cr.__file__).resolve())
+        env = {k: v for k, v in os.environ.items() if k != "COSMIC_RICE_REPOS"}
+        done = subprocess.run([str(link), "list"], env=env, capture_output=True, text=True)
+        self.assertEqual(done.returncode, 0, done.stderr)
 
     def test_unknown_slug_exits_nonzero(self):
         buf = io.StringIO()
