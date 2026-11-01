@@ -163,9 +163,9 @@ class Report(FlipBase):
         _, out = self.flip()
         self.assertIn("Firefox", out)
         self.assertIn("Claude Desktop", out)
-        line = next(x for x in self.stub_log().splitlines() if x.startswith("notify-send"))
-        self.assertIn("Firefox", line)
-        self.assertIn("Dossier", line)
+        sent = self.stub_log().split("notify-send", 1)[1]
+        self.assertIn("Firefox", sent)
+        self.assertIn("Dossier is active", sent)
 
     def test_missing_notify_send_is_not_a_failure(self):
         (self.bin / "notify-send").unlink()
