@@ -208,6 +208,64 @@ class Report(FlipBase):
             self.assertEqual(cr.main(["flip"]), 1)
 
 
+class Choose(FlipBase):
+    def setUp(self):
+        super().setUp()
+        (self.k3day / "cosmic/K3 Day.ron").write_text("()")
+
+    def test_flip_goes_between_the_chosen_two(self):
+        cr.choose(self.rices(), "noir", "k3day")
+        self.flip()
+        self.assertEqual(cr.active(self.rices()).slug, "k3day")
+        self.flip()
+        self.assertEqual(cr.active(self.rices()).slug, "noir")
+
+    def test_order_does_not_matter(self):
+        cr.choose(self.rices(), "k3day", "noir")
+        self.assertEqual(cr.partner(cr.find(self.rices(), "noir"), self.rices()).slug, "k3day")
+
+    def test_rice_outside_the_choice_keeps_its_own_pair(self):
+        cr.choose(self.rices(), "noir", "k3day")
+        self.switch("k3", steps=False)
+        self.assertEqual(cr.partner(cr.find(self.rices(), "k3"), self.rices()).slug, "k3day")
+        self.switch("dossier", steps=False)
+        self.assertEqual(cr.partner(cr.find(self.rices(), "dossier"), self.rices()).slug, "noir")
+
+    def test_two_of_the_same_mode_are_refused(self):
+        with self.assertRaisesRegex(cr.Error, "one dark and one light"):
+            cr.choose(self.rices(), "noir", "k3")
+
+    def test_unknown_rice_is_refused(self):
+        with self.assertRaisesRegex(cr.Error, "nope"):
+            cr.choose(self.rices(), "noir", "nope")
+
+    def test_reset_goes_back_to_the_real_pair(self):
+        cr.choose(self.rices(), "noir", "k3day")
+        cr.reset_choice()
+        self.assertEqual(cr.partner(cr.find(self.rices(), "noir"), self.rices()).slug, "dossier")
+
+    def test_a_choice_naming_a_removed_rice_is_ignored(self):
+        cr.choose(self.rices(), "noir", "k3day")
+        import shutil
+        shutil.rmtree(self.k3day)
+        self.assertEqual(cr.partner(cr.find(self.rices(), "noir"), self.rices()).slug, "dossier")
+
+    def test_pair_follows_the_choice(self):
+        cr.choose(self.rices(), "noir", "k3day")
+        self.is_dark().write_text("false\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cr.follow(self.rices()).slug, "k3day")
+
+    def test_command_sets_and_resets(self):
+        env = {"COSMIC_RICE_REPOS": str(self.repos)}
+        with unittest.mock.patch.dict(os.environ, env), contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(cr.main(["choose", "noir", "k3day"]), 0)
+            self.assertEqual(cr.partner(cr.find(self.rices(), "noir"), self.rices()).slug, "k3day")
+            self.assertEqual(cr.main(["choose", "--reset"]), 0)
+            self.assertEqual(cr.partner(cr.find(self.rices(), "noir"), self.rices()).slug, "dossier")
+        self.assertIn("k3day", out.getvalue())
+
+
 class Nvim(FlipBase):
     def setUp(self):
         super().setUp()

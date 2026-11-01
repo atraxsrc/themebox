@@ -23,6 +23,8 @@ cosmic-rice switch noir         # make a rice active, --keep-icons leaves the ic
 cosmic-rice pair                # match the rice to COSMIC's light/dark setting, once
 cosmic-rice pair --watch        # keep matching it
 cosmic-rice flip                # move to the other half and change everything live
+cosmic-rice choose noir k3day   # flip between these two instead of a rice's own pair
+cosmic-rice choose --reset      # back to each rice's own pair
 cosmic-rice install-shell       # once: let flip reload open zsh shells
 ```
 

@@ -6,6 +6,8 @@
   cosmic-rice pair                 match the rice to COSMIC's light/dark toggle
   cosmic-rice pair --watch         keep matching it
   cosmic-rice flip                 move to the other half and change everything live
+  cosmic-rice choose <a> <b>       flip between these two, one dark and one light
+  cosmic-rice choose --reset       flip between each rice's own pair again
   cosmic-rice install-shell        let flip reload open zsh shells
 
 The active rice is whichever repo ~/update_system.sh links into. Rices are found
@@ -271,6 +273,38 @@ def switch(rice: Rice, rices: list[Rice], keep_icons: bool = False, steps: bool 
     return not failed
 
 
+def choice_file() -> Path:
+    return config_dir() / "cosmic-rice/choice"
+
+
+def chosen_pair(rices: list[Rice]) -> tuple[Rice, Rice] | None:
+    """The two rices picked with cosmic-rice choose, if both still exist."""
+    path = choice_file()
+    slugs = path.read_text().split() if path.is_file() else []
+    found = [r for s in slugs for r in rices if r.slug == s]
+    return (found[0], found[1]) if len(found) == 2 else None
+
+
+def choose(rices: list[Rice], first: str, second: str) -> None:
+    a, b = find(rices, first), find(rices, second)
+    if a.mode == b.mode:
+        raise Error(f"pick one dark and one light rice: {a.slug} and {b.slug} are both {a.mode}")
+    choice_file().parent.mkdir(parents=True, exist_ok=True)
+    choice_file().write_text(f"{a.slug} {b.slug}\n")
+
+
+def reset_choice() -> None:
+    choice_file().unlink(missing_ok=True)
+
+
+def partner(rice: Rice, rices: list[Rice]) -> Rice | None:
+    """Where a flip goes from this rice: the chosen other half, else its own pair."""
+    chosen = chosen_pair(rices)
+    if chosen and rice.slug in (chosen[0].slug, chosen[1].slug):
+        return chosen[1] if rice.slug == chosen[0].slug else chosen[0]
+    return find(rices, rice.pair) if rice.pair else None
+
+
 def follow(rices: list[Rice], keep_icons: bool = False) -> Rice | None:
     """Move to the other half if COSMIC's mode no longer matches. Returns the rice moved to."""
     current = active(rices)
@@ -279,9 +313,9 @@ def follow(rices: list[Rice], keep_icons: bool = False) -> Rice | None:
     state = value(mode_file())
     if state not in ("true", "false") or ("dark" if state == "true" else "light") == current.mode:
         return None
-    if not current.pair:
+    target = partner(current, rices)
+    if target is None:
         raise Error(f"{current.name} has no pair")
-    target = find(rices, current.pair)
     switch(target, rices, keep_icons, steps=False)
     return target
 
@@ -426,9 +460,9 @@ def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
     current = active(rices)
     if current is None:
         raise Error("no active rice: run cosmic-rice switch <slug> once first")
-    if not current.pair:
+    target = partner(current, rices)
+    if target is None:
         raise Error(f"{current.name} has no pair")
-    target = find(rices, current.pair)
     # switch comes first so a running pair --watch already sees the new half
     log = io.StringIO()
     with contextlib.redirect_stdout(log):
@@ -447,6 +481,9 @@ def print_list(rices: list[Rice]) -> None:
     for r in sorted(rices, key=lambda r: r.slug):
         mark = "*" if r is current else " "
         print(f"{mark} {r.slug:<16}{r.name:<17}{r.mode:<7}{r.pair or '-'}")
+    chosen = chosen_pair(rices)
+    if chosen:
+        print(f"\nflip goes between {chosen[0].slug} and {chosen[1].slug}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -462,6 +499,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--interval", type=float, default=2.0, help="seconds between checks with --watch")
     p = sub.add_parser("flip", help="move to the other half and change everything live")
     p.add_argument("--keep-icons", action="store_true", help="leave the current icon theme alone")
+    p = sub.add_parser("choose", help="flip between these two, one dark and one light")
+    p.add_argument("rices", nargs="*", metavar="slug")
+    p.add_argument("--reset", action="store_true", help="flip between each rice's own pair again")
     sub.add_parser("install-shell", help="let flip reload open zsh shells")
     args = ap.parse_args(argv)
 
@@ -474,6 +514,15 @@ def main(argv: list[str] | None = None) -> int:
             print_list(rices)
         elif args.command == "switch":
             return 0 if switch(find(rices, args.slug), rices, args.keep_icons) else 1
+        elif args.command == "choose":
+            if args.reset:
+                reset_choice()
+                print("flip uses each rice's own pair")
+            elif len(args.rices) == 2:
+                choose(rices, *args.rices)
+                print(f"flip goes between {args.rices[0]} and {args.rices[1]}")
+            else:
+                raise Error("usage: cosmic-rice choose <dark> <light>, or --reset")
         elif args.command == "install-shell":
             print("Added to ~/.zshrc, new shells will reload" if install_shell() else "Already in ~/.zshrc")
         elif args.command == "flip":
