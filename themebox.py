@@ -11,6 +11,7 @@
   themebox choose <a> <b>       flip between these two, one dark and one light
   themebox choose --reset       flip between each rice's own pair again
   themebox get <slug>           download a rice and its other half
+  themebox capture <name>       save the current theme and wallpaper as a new rice
   themebox install-shell        let flip reload open zsh shells
 
 The active rice is whichever repo ~/update_system.sh links into. Rices are the
@@ -26,6 +27,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 import tomllib
 from dataclasses import dataclass
@@ -42,6 +44,11 @@ GALLERY = "https://atraxsrc.github.io/cosmic-rices/"
 SOURCE = "https://github.com/atraxsrc"  # where themebox get downloads rices from
 FAILED = "failed:"  # marks a report line that makes flip exit 1
 WALLPAPER = re.compile(r'source: Path\("((?:[^"\\]|\\.)*)"\)')
+# ThemeBuilder fields import cannot do without, and the colours that are None until set
+THEME_NEEDED = ("palette", "spacing", "corner_radii", "gaps", "active_hint")
+THEME_COLORS = ("neutral_tint", "bg_color", "primary_container_bg", "secondary_container_bg", "text_tint",
+                "accent", "success", "warning", "destructive", "window_hint")
+TK_LOOK = ("apply_theme_global", "icon_theme", "interface_font", "monospace_font", "show_maximize", "show_minimize")
 ZSH_SOURCE = r"^\s*#?\s*(?:source|\.)\s.*"
 ZSH_ANY = re.compile(ZSH_SOURCE + r"(?:cosmic-[a-z0-9]+-theme/zsh/[a-z0-9]+\.zsh|ricing/zsh/colors\.zsh)")
 
@@ -542,6 +549,73 @@ def ask_wallpaper(rice: Rice) -> Path | None:
         print(f"No wallpaper {answer}")
 
 
+def stored_theme(mode: str) -> dict[str, str]:
+    """COSMIC's theme settings, one file per field, from its newest version folder."""
+    root = config_dir() / f"cosmic/com.system76.CosmicTheme.{mode.capitalize()}.Builder"
+    folders = [p for p in root.glob("v*") if p.is_dir() and p.name[1:].isdigit()]
+    newest = max(folders, key=lambda p: int(p.name[1:]), default=None)
+    files = newest.iterdir() if newest else ()
+    return {p.name: p.read_text().strip() for p in files if p.is_file() and re.fullmatch(r"[a-z0-9_]+", p.name)}
+
+
+def theme_ron(mode: str, name: str) -> str:
+    """The stored theme as one file that cosmic-settings can import."""
+    fields = {**dict.fromkeys(THEME_COLORS, "None"), **stored_theme(mode)}
+    missing = [field for field in THEME_NEEDED if field not in fields]
+    if missing:
+        raise Error(f"COSMIC has not stored a whole {mode} theme (no {', '.join(missing)}): "
+                    "import one, or use Export in Settings → Desktop → Appearance")
+    fields["palette"] = re.sub(r'name: "(?:[^"\\]|\\.)*"', f'name: "{name}"', fields["palette"], count=1)
+    body = "".join(f"    {field}: {fields[field].replace(chr(10), chr(10) + '    ')},\n" for field in sorted(fields))
+    return f"(\n{body})\n"
+
+
+def copy_wallpaper(repo: Path, slug: str) -> str | None:
+    """Copy the desktop's wallpaper into repo/backgrounds. Its file name, None if there is no one file."""
+    folder = config_dir() / "cosmic/com.system76.CosmicBackground/v1"
+    current = desktop_wallpaper()
+    if value(folder / "same-on-all") == "false" or current is None or not Path(current).is_file():
+        return None
+    copied = repo / "backgrounds" / f"{slug}-{Path(current).name}"
+    copied.parent.mkdir()
+    shutil.copyfile(current, copied)
+    return copied.name
+
+
+def capture(repos: Path, wanted: str) -> None:
+    """Save the current look as a new rice. It lands whole or not at all."""
+    name = wanted.strip(" ")
+    slug = name.lower().replace(" ", "")
+    if not re.fullmatch(r"[a-z0-9]+", slug):
+        raise Error(f"{wanted!r} is not a rice name: use letters, digits and spaces")
+    target = repos / f"cosmic-{slug}-theme"
+    if target.exists():
+        raise Error(f"{target} already exists, pick another name")
+    mode = "light" if value(mode_file()) == "false" else "dark"
+    ron = f"{name.replace(' ', '')}.ron"
+    theme = theme_ron(mode, name)
+    repos.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=repos, prefix=".capture-") as tmp:
+        build = Path(tmp) / "rice"
+        (build / "cosmic").mkdir(parents=True)
+        (build / "cosmic" / ron).write_text(theme)
+        for setting in TK_LOOK:
+            live = config_dir() / "cosmic/com.system76.CosmicTk/v1" / setting
+            if live.is_file():
+                saved = build / "cosmic/config/com.system76.CosmicTk/v1" / setting
+                saved.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(live, saved)
+        wallpaper = copy_wallpaper(build, slug)
+        (build / "rice.toml").write_text(f'name = "{name}"\nmode = "{mode}"\ntheme = "{ron}"\n')
+        build.rename(target)
+    print(f"Saved the current {mode} theme as {name} in {target}")
+    if wallpaper:
+        print(f"  backgrounds/{wallpaper}")
+    else:
+        print(f"  Wallpaper: not a single image, so none was copied. Add one to {target}/backgrounds")
+    print(f"Next: themebox switch {slug}")
+
+
 def leftovers(rice: Rice) -> list[str]:
     """What COSMIC and the apps only allow by hand."""
     steps = []
@@ -681,6 +755,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--reset", action="store_true", help="flip between each rice's own pair again")
     p = sub.add_parser("get", help="download a rice and its other half")
     p.add_argument("slug")
+    p = sub.add_parser("capture", help="save the current theme and wallpaper as a new rice")
+    p.add_argument("name")
     sub.add_parser("install-shell", help="let flip reload open zsh shells")
     args = ap.parse_args(argv)
 
@@ -688,6 +764,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "get":
             get(repos, args.slug)
+            return 0
+        if args.command == "capture":
+            capture(repos, args.name)
             return 0
         rices = discover(repos)
         if not rices:

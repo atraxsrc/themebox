@@ -50,6 +50,7 @@ themebox flip                # move to the other half and change everything live
 themebox switch noir --pick  # choose the wallpaper from a list, works on flip too
 themebox choose noir k3day   # flip between these two instead of a rice's own pair
 themebox choose --reset      # back to each rice's own pair
+themebox capture Mine        # save the current theme and wallpaper as a new rice
 themebox install-shell       # once: let flip reload open zsh shells
 ```
 
@@ -102,7 +103,13 @@ Then add Themebox in Settings → Desktop → Panel → Configure panel applets.
 
 ## Make your own rice
 
-A rice is a folder called `cosmic-<name>-theme`, where the name is lowercase letters and digits. Put it
+The quick way is to set up COSMIC how you like it, then run `themebox capture Mine`. That makes
+`cosmic-mine-theme` from your current light or dark theme, wallpaper, icon theme and fonts, without
+changing your desktop. It leaves out everything else, like your terminal colours and other apps. A
+wallpaper is only copied if it's one image on all monitors. Do it again in the other mode for the other
+half, then add `pair` to each `rice.toml`.
+
+By hand, a rice is a folder called `cosmic-<name>-theme`, where the name is lowercase letters and digits. Put it
 in `~/.local/share/themebox`, or next to this repo if you cloned it, or anywhere with `THEMEBOX_REPOS`
 set. It only needs a COSMIC theme exported to `cosmic/Mine.ron` and a `rice.toml`:
 
