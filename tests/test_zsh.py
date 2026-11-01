@@ -73,8 +73,8 @@ class Shell(FlipBase):
 
     def test_relative_link_is_not_resolved_against_the_shells_folder(self):
         trap = self.root / "elsewhere"
-        (trap / "a/b/zsh").mkdir(parents=True)
-        (trap / "a/b/zsh/evil.zsh").write_text("export RICE=evil\n")
+        (trap / "a/zsh").mkdir(parents=True)
+        (trap / "a/zsh/evil.zsh").write_text("export RICE=evil\n")
         pid, fd = self.spawn()
         os.write(fd, f"cd {trap}\n".encode())
         self.drain(fd, 0.4)
