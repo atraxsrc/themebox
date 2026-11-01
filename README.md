@@ -1,7 +1,13 @@
 # cosmic-rice
 
-One command for the [COSMIC rices](https://atraxsrc.github.io/cosmic-rices/): list them, switch between
-them, and let the desktop's own light/dark toggle pick the matching half of a pair.
+One command to list your [COSMIC rices](https://atraxsrc.github.io/cosmic-rices/), switch between them,
+and have the matching light or dark half follow COSMIC's toggle.
+
+![cosmic-rice list showing every rice, its mode and its pair, with Noir marked active](assets/list.png)
+
+Flip the desktop to light and Noir becomes its light half, Dossier. Flip back and Noir returns:
+
+![The Noir desktop beside the Dossier desktop, the dark and light halves of one pair](assets/pair.jpg)
 
 It needs Python 3.10+ and nothing else. Keep this repo next to the `cosmic-*-theme` repos.
 
