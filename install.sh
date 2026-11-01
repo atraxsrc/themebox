@@ -14,7 +14,7 @@ ENTRY="$HOME/.local/share/applications/io.github.atraxsrc.ThemeboxApplet.desktop
 for tool in git curl python3 sha256sum; do
     command -v "$tool" >/dev/null || { echo "themebox needs $tool, install it first"; exit 1; }
 done
-python3 -c 'import sys; sys.exit(sys.version_info < (3, 10))' || { echo "themebox needs Python 3.10+"; exit 1; }
+python3 -c 'import sys; sys.exit(sys.version_info < (3, 11))' || { echo "themebox needs Python 3.11+"; exit 1; }
 
 mkdir -p "$BASE" "$BIN" "$(dirname "$ENTRY")"
 if [ -d "$APP/.git" ]; then

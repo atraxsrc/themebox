@@ -13,8 +13,9 @@
   themebox get <slug>           download a rice and its other half
   themebox install-shell        let flip reload open zsh shells
 
-The active rice is whichever repo ~/update_system.sh links into. Rices are found
-in THEMEBOX_REPOS, or else in the folder that holds this repo.
+The active rice is whichever repo ~/update_system.sh links into. Rices are the
+cosmic-<slug>-theme folders with a rice.toml, in THEMEBOX_REPOS or else in the
+folder that holds this repo. Older ones keep their settings in scripts/switch.sh.
 """
 import argparse
 import contextlib
@@ -26,10 +27,13 @@ import signal
 import subprocess
 import sys
 import time
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-SETTING = re.compile(r'^(NAME|SLUG|MODE|RON|TERM_RON|BTOP)="([^"]*)"', re.M)
+SETTING = re.compile(r'^(NAME|MODE|RON|TERM_RON|BTOP)="([^"]*)"', re.M)
+OLD_SETTINGS = {"NAME": "name", "MODE": "mode", "RON": "theme", "TERM_RON": "terminal", "BTOP": "btop"}
+REQUIRED = ("name", "mode", "theme")
 PAIR = re.compile(r"https://github\.com/[^/\s]+/(cosmic-[a-z0-9]+-theme)")
 TOOLS = ("fastfetch", "lsd", "bat", "starship", "kitty", "alacritty", "wezterm", "ghostty",
          "delta", "lazygit", "helix", "gtk", "qt", "discord")
@@ -65,15 +69,51 @@ def readme_pair(repo: Path) -> str | None:
     return next((p for p in PAIR.findall(head) if p != repo.name), None)
 
 
+def settings(repo: Path) -> dict[str, str] | None:
+    """A rice's rice.toml, or the block in an older rice's switch.sh. None if it has neither."""
+    toml, script = repo / "rice.toml", repo / "scripts/switch.sh"
+    if toml.is_file():
+        source, required = toml, REQUIRED
+        try:
+            found = tomllib.loads(toml.read_text())
+        except tomllib.TOMLDecodeError as err:
+            raise Error(f"{toml}: {err}") from None
+    elif script.is_file():
+        source, required = script, tuple(OLD_SETTINGS)
+        found = dict(SETTING.findall(script.read_text()))
+    else:
+        return None
+    missing = [key for key in required if key not in found]
+    if missing:
+        raise Error(f"{source} needs {', '.join(missing)}")
+    if source is script:
+        found = {OLD_SETTINGS[key]: text for key, text in found.items()}
+    if not all(isinstance(text, str) for text in found.values()):
+        raise Error(f"{source}: every setting must be a quoted string")
+    if found["mode"] not in ("dark", "light"):
+        raise Error(f"{source}: mode must be dark or light, not {found['mode']}")
+    return found
+
+
+def pair_repo(repo: Path) -> str | None:
+    """The other half's repo name: rice.toml's pair, else the link in the README."""
+    pair = (settings(repo) or {}).get("pair")
+    if pair is None:
+        return readme_pair(repo)
+    if not re.fullmatch(r"[a-z0-9]+", pair):
+        raise Error(f"{repo / 'rice.toml'}: {pair} is not a rice name")
+    return f"cosmic-{pair}-theme"
+
+
 def discover(repos: Path) -> list[Rice]:
     rices, pairs = [], {}
     for repo in sorted(Path(repos).glob("cosmic-*-theme")):
-        script = repo / "scripts/switch.sh"
-        if not script.is_file():
+        s = settings(repo)
+        if s is None:
             continue
-        s = dict(SETTING.findall(script.read_text()))
-        rices.append(Rice(repo, s["NAME"], s["SLUG"], s["MODE"], s["RON"], s["TERM_RON"], s["BTOP"]))
-        pairs[repo.name] = readme_pair(repo)
+        slug = repo.name.removeprefix("cosmic-").removesuffix("-theme")
+        rices.append(Rice(repo, s["name"], slug, s["mode"], s["theme"], s.get("terminal", ""), s.get("btop", "")))
+        pairs[repo.name] = pair_repo(repo)
     slugs = {r.repo.name: r.slug for r in rices}
     for r in rices:
         r.pair = slugs.get(pairs[r.repo.name])
@@ -127,8 +167,14 @@ def backup_copy(src: Path, dest: Path) -> None:
     shutil.copyfile(src, dest)
 
 
+def has_tool(rice: Rice, tool: str) -> bool:
+    return os.access(rice.repo / tool / "install.sh", os.X_OK)
+
+
 def install(rice: Rice, tool: str) -> bool:
-    """Run <tool>/install.sh, showing its output under the tool's name."""
+    """Run <tool>/install.sh if the rice has one, showing its output under the tool's name."""
+    if not has_tool(rice, tool):
+        return True
     done = subprocess.run([f"./{tool}/install.sh"], cwd=rice.repo, stdin=subprocess.DEVNULL,
                           stdout=subprocess.PIPE, text=True)
     for line in done.stdout.splitlines():
@@ -228,23 +274,30 @@ def apply_zsh(rice: Rice) -> bool:
 def print_steps(rice: Rice) -> None:
     r = rice.repo
     Mode = rice.mode.capitalize()
-    jsonc = sorted((r / "claude-desktop").glob("*.jsonc"))
-    claude = jsonc[0].stem if jsonc else "this rice's theme"
-    print(f"""
-{rice.name} is active. Left to do by hand (skip what is already done), paths under {r}:
-  1. Settings → Desktop → Appearance → {Mode} → Import cosmic/{rice.ron}
-  2. COSMIC Terminal → View → Color schemes → {Mode} tab → Import cosmic-term/{rice.term_ron}
-  3. Firefox: enable this rice's add-on in about:addons (link in the README), restart Firefox
-  4. Claude Desktop: Ctrl+Shift+T → {claude}, Appearance → {Mode}
-  5. exec zsh, restart Neovim
-  Cursor (optional, sudo + reboot): ./cursors/install.sh""")
+    steps = [f"Settings → Desktop → Appearance → {Mode} → Import cosmic/{rice.ron}"]
+    if rice.term_ron:
+        steps.append(f"COSMIC Terminal → View → Color schemes → {Mode} tab → Import cosmic-term/{rice.term_ron}")
+    if has_tool(rice, "firefox"):
+        steps.append("Firefox: enable this rice's add-on in about:addons (link in the README), restart Firefox")
+    if has_tool(rice, "claude-desktop"):
+        jsonc = sorted((r / "claude-desktop").glob("*.jsonc"))
+        claude = jsonc[0].stem if jsonc else "this rice's theme"
+        steps.append(f"Claude Desktop: Ctrl+Shift+T → {claude}, Appearance → {Mode}")
+    shell = [text for tool, text in (("zsh", "exec zsh"), ("nvim", "restart Neovim")) if has_tool(rice, tool)]
+    if shell:
+        steps.append(", ".join(shell))
+    print(f"\n{rice.name} is active. Left to do by hand (skip what is already done), paths under {r}:")
+    for number, step in enumerate(steps, 1):
+        print(f"  {number}. {step}")
+    if has_tool(rice, "cursors"):
+        print("  Cursor (optional, sudo + reboot): ./cursors/install.sh")
     for tg in sorted(r.glob("telegram/*.tdesktop-theme")):
         print(f"  Telegram (optional): Settings → Chat Settings → Chat wallpaper → Choose from file → {tg.relative_to(r)}")
     if (r / "brave/theme/manifest.json").is_file():
         print(f"  Brave (optional): brave://extensions → Developer mode → Load unpacked → {r}/brave/theme")
-    if os.access(r / "obsidian/install.sh", os.X_OK):
+    if has_tool(rice, "obsidian"):
         print("  Obsidian (optional): ./obsidian/install.sh <vault>, then Settings → Appearance → CSS snippets")
-    if os.access(r / "helix/install.sh", os.X_OK) or os.access(r / "kitty/install.sh", os.X_OK):
+    if has_tool(rice, "helix") or has_tool(rice, "kitty"):
         print("  Terminals and editors: the installers above only copy theme files; see the README for")
         print("  the one include line each of kitty, Alacritty, WezTerm, Ghostty, Helix, delta and qt6ct needs")
 
@@ -255,19 +308,23 @@ def switch(rice: Rice, rices: list[Rice], keep_icons: bool = False, steps: bool 
     failed = []
     apply_cosmic(rice, keep_icons)
     for tool in TOOLS:
-        if os.access(rice.repo / tool / "install.sh", os.X_OK) and not install(rice, tool):
+        if not install(rice, tool):
             failed.append(tool)
-    try:
-        apply_btop(rice)
-    except OSError as err:
-        print(f"  btop: {err}")
-        failed.append("btop")
-    if not install(rice, "nvim"):
-        failed.append("nvim")
-    park_nvim(rice, rices)
-    if not apply_zsh(rice):
+    if rice.btop:
+        try:
+            apply_btop(rice)
+        except OSError as err:
+            print(f"  btop: {err}")
+            failed.append("btop")
+    if has_tool(rice, "nvim"):
+        if not install(rice, "nvim"):
+            failed.append("nvim")
+        park_nvim(rice, rices)
+    if has_tool(rice, "zsh") and not apply_zsh(rice):
         failed.append("zsh")
     link = Path.home() / "update_system.sh"
+    if link.is_file() and not link.is_symlink():
+        backup(link)
     link.unlink(missing_ok=True)
     link.symlink_to(rice.repo / "scripts/update_system.sh")
     print(f"  ~/update_system.sh -> {rice.name}")
@@ -305,7 +362,7 @@ def get(repos: Path, wanted: str) -> None:
         raise Error(f"{wanted!r} is not a rice name, see {GALLERY}")
     name = f"cosmic-{slug}-theme"
     fetch(repos, name)
-    other = readme_pair(repos / name)
+    other = pair_repo(repos / name)
     if other:
         fetch(repos, other)
     print(f"Done. Next: themebox switch {slug}")
@@ -487,7 +544,9 @@ def ask_wallpaper(rice: Rice) -> Path | None:
 
 def leftovers(rice: Rice) -> list[str]:
     """What COSMIC and the apps only allow by hand."""
-    steps = [f"Firefox: enable the {rice.name} add-on in about:addons, then restart Firefox"]
+    steps = []
+    if has_tool(rice, "firefox"):
+        steps.append(f"Firefox: enable the {rice.name} add-on in about:addons, then restart Firefox")
     wanted = value(rice.repo / "cosmic/config/com.system76.CosmicTk/v1/icon_theme")
     if wanted and not icons_installed(wanted):
         steps.append(f"Icons: {wanted} is not installed, run {rice.repo}/icons/install.sh")
@@ -581,7 +640,9 @@ def flip(rices: list[Rice], keep_icons: bool = False, pick: bool = False) -> boo
     if not switched:
         print(log.getvalue())
     messages = [] if switched else [f"{FAILED} some tools, run themebox flip in a terminal to see which"]
-    messages += apply_theme(target) + apply_wallpaper(target, current, chosen) + reload_nvim(target) + reload_zsh()
+    messages += apply_theme(target) + apply_wallpaper(target, current, chosen) + reload_nvim(target)
+    if has_tool(target, "zsh"):
+        messages += reload_zsh()
     messages += leftovers(target)
     report(target, messages)
     return not any(m.startswith(FAILED) for m in messages)

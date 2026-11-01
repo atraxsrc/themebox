@@ -23,7 +23,7 @@ themebox install-shell       # once: let a flip reload open zsh shells
 ```
 
 Then add Themebox in Settings → Desktop → Panel → Configure panel applets. It needs git, curl and
-Python 3.10+. Browse the rices in the [gallery](https://atraxsrc.github.io/cosmic-rices/); the name to use
+Python 3.11+. Browse the rices in the [gallery](https://atraxsrc.github.io/cosmic-rices/); the name to use
 is the part of the repo name between `cosmic-` and `-theme`.
 
 Everything goes in `~/.local/share/themebox`, plus two files in `~/.local/bin` and one in
@@ -100,10 +100,36 @@ the logic stays in the CLI. It needs Rust and the libcosmic build dependencies.
 
 Then add Themebox in Settings → Desktop → Panel → Configure panel applets.
 
-## How it reads the rices
+## Make your own rice
 
-Each rice's settings come from the block at the top of its `scripts/switch.sh`, and its pair from the
-link in its README. Set `THEMEBOX_REPOS` if the repos live somewhere else.
+A rice is a folder called `cosmic-<name>-theme`, where the name is lowercase letters and digits. Put it
+in `~/.local/share/themebox`, or next to this repo if you cloned it, or anywhere with `THEMEBOX_REPOS`
+set. It only needs a COSMIC theme exported to `cosmic/Mine.ron` and a `rice.toml`:
+
+```toml
+name = "Mine"
+mode = "dark"                 # or light
+theme = "Mine.ron"            # in cosmic/
+
+# Optional
+pair = "mineday"              # the other half, so a flip works
+terminal = "Mine-term.ron"    # in cosmic-term/
+btop = "Mine"                 # btop/Mine.theme
+```
+
+Everything else is optional too, and anything a rice doesn't have is skipped:
+
+- `backgrounds/` holds its wallpapers. `<name>-anime.png` is the default, else the first file.
+- `cosmic/config/` is copied over `~/.config/cosmic`: fonts, terminal look, icon theme.
+- `<tool>/install.sh` runs for each tool it styles: `nvim`, `zsh`, `firefox`, `claude-desktop`, and
+  `fastfetch`, `lsd`, `bat`, `starship`, `kitty`, `alacritty`, `wezterm`, `ghostty`, `delta`, `lazygit`,
+  `helix`, `gtk`, `qt`, `discord`.
+
+Without a `zsh` folder your `~/.zshrc` is left alone, and without an `nvim` folder so is your Neovim
+config. With no `pair`, use `themebox choose <dark> <light>` to pick two rices to flip between.
+
+Rices made before `rice.toml` still work: themebox reads the block at the top of their
+`scripts/switch.sh` and the pair link in their README.
 
 ## Tests
 
