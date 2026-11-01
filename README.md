@@ -22,7 +22,17 @@ cosmic-rice list                # every rice, * marks the active one
 cosmic-rice switch noir         # make a rice active, --keep-icons leaves the icon theme alone
 cosmic-rice pair                # match the rice to COSMIC's light/dark setting, once
 cosmic-rice pair --watch        # keep matching it
+cosmic-rice flip                # move to the other half and change everything live
+cosmic-rice install-shell       # once: let flip reload open zsh shells
 ```
+
+`flip` moves to the other half of the active rice. It applies the configs, imports the COSMIC theme,
+sets the matching wallpaper, recolours running Neovims and reloads registered zsh shells. Then it sends
+a notification with whatever is left, such as the Firefox add-on. It replaces COSMIC's stored theme for
+that mode, so changes made in Settings are lost on the next flip.
+
+`install-shell` adds one line to `~/.zshrc`. Terminals opened before that line existed are not reloaded.
+Nothing is closed either way.
 
 `switch` does what a rice's `scripts/switch.sh` does and backs up what it replaces (`*.bak`). If one
 tool fails the others still run, the failures are listed at the end and the exit code is 1. It finishes

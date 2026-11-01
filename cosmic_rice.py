@@ -6,6 +6,7 @@
   cosmic-rice pair                 match the rice to COSMIC's light/dark toggle
   cosmic-rice pair --watch         keep matching it
   cosmic-rice flip                 move to the other half and change everything live
+  cosmic-rice install-shell        let flip reload open zsh shells
 
 The active rice is whichever repo ~/update_system.sh links into. Rices are found
 in COSMIC_RICE_REPOS, or else in the folder that holds this repo.
@@ -14,6 +15,7 @@ import argparse
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -365,6 +367,43 @@ def reload_nvim(rice: Rice) -> list[str]:
     return []
 
 
+def shell_line() -> str:
+    return f'source "{Path(__file__).resolve().parent}/zsh/reload.zsh"'
+
+
+def install_shell() -> bool:
+    """Add the reload snippet to ~/.zshrc. False if it is already there."""
+    rc = Path.home() / ".zshrc"
+    rc.touch()
+    text = rc.read_text()
+    if "zsh/reload.zsh" in text:
+        return False
+    backup(rc)
+    rc.write_text(text + ("" if text.endswith("\n") or not text else "\n") + shell_line() + "\n")
+    return True
+
+
+def reload_zsh() -> list[str]:
+    """Signal registered shells only: USR1 kills a zsh that has no trap for it."""
+    rc = Path.home() / ".zshrc"
+    if "zsh/reload.zsh" not in (rc.read_text() if rc.is_file() else ""):
+        return ["Open zsh shells: run cosmic-rice install-shell once, or exec zsh in each"]
+    run = os.environ.get("XDG_RUNTIME_DIR")
+    folder = Path(run) / "cosmic-rice/zsh" if run else None
+    for entry in sorted(folder.iterdir()) if folder and folder.is_dir() else []:
+        if not entry.name.isdigit():
+            continue
+        try:
+            is_zsh = (Path("/proc") / entry.name / "comm").read_text().strip() == "zsh"
+            if is_zsh:
+                os.kill(int(entry.name), signal.SIGUSR1)
+        except OSError:
+            is_zsh = False
+        if not is_zsh:
+            entry.unlink(missing_ok=True)
+    return []
+
+
 def report(rice: Rice, messages: list[str]) -> None:
     print(f"\n{rice.name} is active.")
     if messages:
@@ -387,7 +426,8 @@ def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
     # switch comes first so a running pair --watch already sees the new half
     messages = [] if switch(target, rices, keep_icons, steps=False) else [
         f"{FAILED} some tools, run cosmic-rice flip in a terminal to see which"]
-    messages += apply_theme(target) + apply_wallpaper(target, current) + reload_nvim(target) + leftovers(target)
+    messages += apply_theme(target) + apply_wallpaper(target, current) + reload_nvim(target) + reload_zsh()
+    messages += leftovers(target)
     report(target, messages)
     return not any(m.startswith(FAILED) for m in messages)
 
@@ -412,6 +452,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--interval", type=float, default=2.0, help="seconds between checks with --watch")
     p = sub.add_parser("flip", help="move to the other half and change everything live")
     p.add_argument("--keep-icons", action="store_true", help="leave the current icon theme alone")
+    sub.add_parser("install-shell", help="let flip reload open zsh shells")
     args = ap.parse_args(argv)
 
     repos = Path(os.environ.get("COSMIC_RICE_REPOS") or Path(__file__).resolve().parent.parent)
@@ -423,6 +464,8 @@ def main(argv: list[str] | None = None) -> int:
             print_list(rices)
         elif args.command == "switch":
             return 0 if switch(find(rices, args.slug), rices, args.keep_icons) else 1
+        elif args.command == "install-shell":
+            print("Added to ~/.zshrc, new shells will reload" if install_shell() else "Already in ~/.zshrc")
         elif args.command == "flip":
             return 0 if flip(rices, args.keep_icons) else 1
         elif args.watch:
