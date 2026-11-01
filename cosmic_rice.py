@@ -12,6 +12,8 @@ The active rice is whichever repo ~/update_system.sh links into. Rices are found
 in COSMIC_RICE_REPOS, or else in the folder that holds this repo.
 """
 import argparse
+import contextlib
+import io
 import os
 import re
 import shutil
@@ -123,6 +125,11 @@ def install(rice: Rice, tool: str) -> bool:
     return done.returncode == 0
 
 
+def icons_installed(name: str) -> bool:
+    roots = (Path.home() / ".local/share/icons", Path("/usr/share/icons"))
+    return any((root / name).is_dir() for root in roots)
+
+
 def apply_cosmic(rice: Rice, keep_icons: bool) -> None:
     """Fonts, terminal look, icons. A terminal scheme or icon theme that is already
     a variant of this rice's stays, so dimmed and recoloured choices survive."""
@@ -144,8 +151,7 @@ def apply_cosmic(rice: Rice, keep_icons: bool) -> None:
             if have.startswith(want.rsplit("-", 1)[0] + "-"):
                 print(f"  cosmic: icons stay {have}")
                 continue
-            roots = (Path.home() / ".local/share/icons", Path("/usr/share/icons"))
-            if not any((root / want).is_dir() for root in roots):
+            if not icons_installed(want):
                 print(f"  cosmic: icons stay {have or 'default'}, {want} is not installed (./icons/install.sh)")
                 continue
         backup_copy(src, dest)
@@ -337,10 +343,10 @@ def apply_wallpaper(rice: Rice, previous: Rice) -> list[str]:
 
 def leftovers(rice: Rice) -> list[str]:
     """What COSMIC and the apps only allow by hand."""
-    steps = [f"Firefox: enable the {rice.name} add-on in about:addons"]
-    jsonc = sorted((rice.repo / "claude-desktop").glob("*.jsonc"))
-    if jsonc:
-        steps.append(f"Claude Desktop: Ctrl+Shift+T → {jsonc[0].stem}")
+    steps = [f"Firefox: enable the {rice.name} add-on in about:addons, then restart Firefox"]
+    wanted = value(rice.repo / "cosmic/config/com.system76.CosmicTk/v1/icon_theme")
+    if wanted and not icons_installed(wanted):
+        steps.append(f"Icons: {wanted} is not installed, run {rice.repo}/icons/install.sh")
     scheme = rice.repo / "cosmic-term" / rice.term_ron
     if scheme.is_file():
         name = re.search(r'name: "([^"]*)"', scheme.read_text())
@@ -424,8 +430,12 @@ def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
         raise Error(f"{current.name} has no pair")
     target = find(rices, current.pair)
     # switch comes first so a running pair --watch already sees the new half
-    messages = [] if switch(target, rices, keep_icons, steps=False) else [
-        f"{FAILED} some tools, run cosmic-rice flip in a terminal to see which"]
+    log = io.StringIO()
+    with contextlib.redirect_stdout(log):
+        switched = switch(target, rices, keep_icons, steps=False)
+    if not switched:
+        print(log.getvalue())
+    messages = [] if switched else [f"{FAILED} some tools, run cosmic-rice flip in a terminal to see which"]
     messages += apply_theme(target) + apply_wallpaper(target, current) + reload_nvim(target) + reload_zsh()
     messages += leftovers(target)
     report(target, messages)

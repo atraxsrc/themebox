@@ -82,8 +82,8 @@ feature. Shells must opt in instead.
 
 ### Steps left in the report
 
-- **Firefox:** enable this rice's add-on. An add-on cannot be enabled from outside Firefox.
-- **Claude Desktop:** pick the theme. `install.sh` only installs the file.
+- **Firefox:** enable this rice's add-on and restart. An add-on cannot be enabled from outside Firefox.
+- **Icons:** only if the rice's icon pack is not installed, with the install command.
 - **COSMIC Terminal:** only if the rice's scheme name is not in `color_schemes_<mode>`, with the import step.
 
 ## Stage 2: the applet
@@ -124,7 +124,7 @@ desktop.
 - `flip` is a new command. `switch` and `pair` keep today's behaviour.
 - The snippet lives in this repo, with no change to the 28 rice repos.
 - The applet lives in this repo rather than its own.
-- One notification per flip, with no setting to silence it. Firefox and Claude Desktop will appear every
-  time until they can be automated.
+- One notification per flip, with no setting to silence it. Firefox will appear every time. Each pair
+  shares one Claude Desktop theme file, so that step was dropped after the real-desktop test.
 - A flip does not take a new backup of `~/.config/cosmic`. It relies on `.bak` files, and the theme import
   has none: COSMIC's own stored theme for that mode is overwritten by the rice's file.

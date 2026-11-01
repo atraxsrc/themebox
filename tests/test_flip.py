@@ -159,13 +159,34 @@ class Wallpaper(FlipBase):
 
 
 class Report(FlipBase):
-    def test_report_lists_firefox_and_claude_and_goes_to_notify_send(self):
+    def test_report_lists_firefox_and_goes_to_notify_send(self):
         _, out = self.flip()
         self.assertIn("Firefox", out)
-        self.assertIn("Claude Desktop", out)
         sent = self.stub_log().split("notify-send", 1)[1]
         self.assertIn("Firefox", sent)
         self.assertIn("Dossier is active", sent)
+
+    def test_firefox_step_says_to_restart(self):
+        self.assertIn("restart Firefox", cr.leftovers(cr.find(self.rices(), "dossier"))[0])
+
+    def test_shared_claude_theme_is_not_a_step(self):
+        self.assertFalse(any("Claude" in m for m in cr.leftovers(cr.find(self.rices(), "dossier"))))
+
+    def test_missing_icon_pack_is_a_step(self):
+        rice = cr.find(self.rices(), "dossier")
+        step = [m for m in cr.leftovers(rice) if m.startswith("Icons")]
+        self.assertIn(f"{rice.repo}/icons/install.sh", step[0])
+        (self.home / ".local/share/icons/Kanagawa-Dossier-Orange").mkdir(parents=True)
+        self.assertFalse(any(m.startswith("Icons") for m in cr.leftovers(rice)))
+
+    def test_flip_shows_only_the_report(self):
+        self.assertNotIn("ran bat", self.flip()[1])
+
+    def test_flip_shows_installer_output_when_a_tool_fails(self):
+        (self.dossier / "bat/install.sh").write_text("#!/bin/sh\necho bat is broken\nexit 3\n")
+        ok, out = self.flip()
+        self.assertFalse(ok)
+        self.assertIn("bat is broken", out)
 
     def test_missing_notify_send_is_not_a_failure(self):
         (self.bin / "notify-send").unlink()
