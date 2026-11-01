@@ -5,6 +5,7 @@
   cosmic-rice switch <slug>        make a rice active
   cosmic-rice pair                 match the rice to COSMIC's light/dark toggle
   cosmic-rice pair --watch         keep matching it
+  cosmic-rice flip                 move to the other half and change everything live
 
 The active rice is whichever repo ~/update_system.sh links into. Rices are found
 in COSMIC_RICE_REPOS, or else in the folder that holds this repo.
@@ -24,6 +25,8 @@ PAIR = re.compile(r"https://github\.com/[^/\s]+/(cosmic-[a-z0-9]+-theme)")
 TOOLS = ("fastfetch", "lsd", "bat", "starship", "kitty", "alacritty", "wezterm", "ghostty",
          "delta", "lazygit", "helix", "gtk", "qt", "discord")
 LEGACY_NVIM = ("harbordark",)  # the old hand-installed spec, parked like any other
+FAILED = "failed:"  # marks a report line that makes flip exit 1
+WALLPAPER = re.compile(r'source: Path\("((?:[^"\\]|\\.)*)"\)')
 ZSH_SOURCE = r"^\s*#?\s*(?:source|\.)\s.*"
 ZSH_ANY = re.compile(ZSH_SOURCE + r"(?:cosmic-[a-z0-9]+-theme/zsh/[a-z0-9]+\.zsh|ricing/zsh/colors\.zsh)")
 
@@ -275,6 +278,104 @@ def follow(rices: list[Rice], keep_icons: bool = False) -> Rice | None:
     return target
 
 
+def run_quiet(cmd: list[str], timeout: float = 30) -> bool:
+    """Run a desktop command, True if it worked. Never raises."""
+    try:
+        done = subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL, timeout=timeout)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return done.returncode == 0
+
+
+def apply_theme(rice: Rice) -> list[str]:
+    """Import the COSMIC theme, which also sets the desktop's light or dark mode."""
+    path = rice.repo / "cosmic" / rice.ron
+    if run_quiet(["cosmic-settings", "appearance", "import", str(path)]):
+        return []
+    return [f"{FAILED} theme import, in Settings → Desktop → Appearance import {path}"]
+
+
+def pick_wallpaper(rice: Rice, previous: Rice, current: str) -> Path | None:
+    """The same subject on the other half if there is one, else anime, else the first file."""
+    folder = rice.repo / "backgrounds"
+    files = sorted(p for p in folder.glob("*") if p.is_file())
+    now = Path(current)
+    prefix = f"{previous.slug}-"
+    if now.parent == previous.repo / "backgrounds" and now.name.startswith(prefix):
+        same = folder / f"{rice.slug}-{now.name[len(prefix):]}"
+        if same.is_file():
+            return same
+    anime = folder / f"{rice.slug}-anime.png"
+    if anime.is_file():
+        return anime
+    return files[0] if files else None
+
+
+def apply_wallpaper(rice: Rice, previous: Rice) -> list[str]:
+    """Change only the path in cosmic-bg's entry for all monitors."""
+    folder = config_dir() / "cosmic/com.system76.CosmicBackground/v1"
+    manual = f"Wallpaper: Settings → Wallpaper → a file from {rice.repo}/backgrounds"
+    entry = folder / "all"
+    if value(folder / "same-on-all") == "false" or not entry.is_file():
+        return [manual]
+    text = entry.read_text()
+    found = WALLPAPER.search(text)
+    if not found:
+        return [manual]
+    current = found.group(1).replace("\\\\", "\\")
+    chosen = pick_wallpaper(rice, previous, current)
+    if chosen is None:
+        return []
+    escaped = str(chosen).replace("\\", "\\\\").replace('"', '\\"')
+    backup(entry)
+    entry.write_text(WALLPAPER.sub(lambda _: f'source: Path("{escaped}")', text, count=1))
+    return []
+
+
+def leftovers(rice: Rice) -> list[str]:
+    """What COSMIC and the apps only allow by hand."""
+    steps = [f"Firefox: enable the {rice.name} add-on in about:addons"]
+    jsonc = sorted((rice.repo / "claude-desktop").glob("*.jsonc"))
+    if jsonc:
+        steps.append(f"Claude Desktop: Ctrl+Shift+T → {jsonc[0].stem}")
+    scheme = rice.repo / "cosmic-term" / rice.term_ron
+    if scheme.is_file():
+        name = re.search(r'name: "([^"]*)"', scheme.read_text())
+        stored = config_dir() / f"cosmic/com.system76.CosmicTerm/v1/color_schemes_{rice.mode}"
+        known = stored.read_text() if stored.is_file() else ""
+        if name and f'name: "{name.group(1)}"' not in known:
+            steps.append(f"COSMIC Terminal: View → Color schemes → {rice.mode.capitalize()} tab → Import {scheme}")
+    return steps
+
+
+def report(rice: Rice, messages: list[str]) -> None:
+    print(f"\n{rice.name} is active.")
+    if messages:
+        print("Left to do:")
+        for m in messages:
+            print(f"  {m}")
+    if shutil.which("notify-send"):
+        body = "\n".join(messages) or "Nothing left to do."
+        run_quiet(["notify-send", "--app-name=cosmic-rice", f"{rice.name} is active", body])
+
+
+def flip(rices: list[Rice], keep_icons: bool = False) -> bool:
+    """Move to the other half and change everything live. False if any step failed."""
+    current = active(rices)
+    if current is None:
+        raise Error("no active rice: run cosmic-rice switch <slug> once first")
+    if not current.pair:
+        raise Error(f"{current.name} has no pair")
+    target = find(rices, current.pair)
+    # switch comes first so a running pair --watch already sees the new half
+    messages = [] if switch(target, rices, keep_icons, steps=False) else [
+        f"{FAILED} some tools, run cosmic-rice flip in a terminal to see which"]
+    messages += apply_theme(target) + apply_wallpaper(target, current) + leftovers(target)
+    report(target, messages)
+    return not any(m.startswith(FAILED) for m in messages)
+
+
 def print_list(rices: list[Rice]) -> None:
     current = active(rices)
     for r in sorted(rices, key=lambda r: r.slug):
@@ -293,6 +394,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--watch", action="store_true", help="keep following the toggle")
     p.add_argument("--keep-icons", action="store_true", help="leave the current icon theme alone")
     p.add_argument("--interval", type=float, default=2.0, help="seconds between checks with --watch")
+    p = sub.add_parser("flip", help="move to the other half and change everything live")
+    p.add_argument("--keep-icons", action="store_true", help="leave the current icon theme alone")
     args = ap.parse_args(argv)
 
     repos = Path(os.environ.get("COSMIC_RICE_REPOS") or Path(__file__).resolve().parent.parent)
@@ -304,6 +407,8 @@ def main(argv: list[str] | None = None) -> int:
             print_list(rices)
         elif args.command == "switch":
             return 0 if switch(find(rices, args.slug), rices, args.keep_icons) else 1
+        elif args.command == "flip":
+            return 0 if flip(rices, args.keep_icons) else 1
         elif args.watch:
             while True:
                 follow(rices, args.keep_icons)
