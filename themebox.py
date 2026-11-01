@@ -195,11 +195,50 @@ def icons_installed(name: str) -> bool:
     return any((root / name).is_dir() for root in roots)
 
 
+def stored_schemes(rice: Rice) -> Path:
+    return config_dir() / f"cosmic/com.system76.CosmicTerm/v1/color_schemes_{rice.mode}"
+
+
+def missing_scheme(rice: Rice) -> Path | None:
+    """The rice's terminal scheme file, if COSMIC Terminal does not have it yet."""
+    scheme = rice.repo / "cosmic-term" / rice.term_ron
+    if not scheme.is_file():
+        return None
+    name = re.search(r'name: "([^"]*)"', scheme.read_text())
+    stored = stored_schemes(rice)
+    known = stored.read_text() if stored.is_file() else ""
+    return scheme if name and f'name: "{name.group(1)}"' not in known else None
+
+
+def add_scheme(rice: Rice) -> None:
+    """COSMIC Terminal only looks a scheme up in its own list. Without it there, open
+    tabs keep the last rice's colours and new ones use the default."""
+    scheme = missing_scheme(rice)
+    if scheme is None:
+        return
+    stored = stored_schemes(rice)
+    text = stored.read_text().strip() if stored.is_file() else "{}"
+    if not (text.startswith("{") and text.endswith("}")):
+        print(f"  cosmic: could not read {stored.name}, import {scheme.name} by hand")
+        return
+    ids = [int(number) for number in re.findall(r"^\s*(\d+)\s*:", text, re.M)]
+    body = text[:-1].rstrip()
+    if body != "{" and not body.endswith(","):
+        body += ","
+    entry = scheme.read_text().strip().replace("\n", "\n    ")
+    stored.parent.mkdir(parents=True, exist_ok=True)
+    if stored.is_file():
+        backup(stored)
+    stored.write_text(f"{body}\n    {max(ids, default=-1) + 1}: {entry},\n}}\n")
+    print(f"  cosmic: added terminal scheme {scheme.name}")
+
+
 def apply_cosmic(rice: Rice, keep_icons: bool) -> None:
     """Fonts, terminal look, icons. A terminal scheme or icon theme that is already
     a variant of this rice's stays, so dimmed and recoloured choices survive."""
     other = "light" if rice.mode == "dark" else "dark"
     source = rice.repo / "cosmic/config"
+    add_scheme(rice)
     for src in sorted(p for p in source.rglob("*") if p.is_file()):
         rel = src.relative_to(source)
         dest = config_dir() / "cosmic" / rel
@@ -282,7 +321,7 @@ def print_steps(rice: Rice) -> None:
     r = rice.repo
     Mode = rice.mode.capitalize()
     steps = [f"Settings → Desktop → Appearance → {Mode} → Import cosmic/{rice.ron}"]
-    if rice.term_ron:
+    if missing_scheme(rice):
         steps.append(f"COSMIC Terminal → View → Color schemes → {Mode} tab → Import cosmic-term/{rice.term_ron}")
     if has_tool(rice, "firefox"):
         steps.append("Firefox: enable this rice's add-on in about:addons (link in the README), restart Firefox")
@@ -624,13 +663,9 @@ def leftovers(rice: Rice) -> list[str]:
     wanted = value(rice.repo / "cosmic/config/com.system76.CosmicTk/v1/icon_theme")
     if wanted and not icons_installed(wanted):
         steps.append(f"Icons: {wanted} is not installed, run {rice.repo}/icons/install.sh")
-    scheme = rice.repo / "cosmic-term" / rice.term_ron
-    if scheme.is_file():
-        name = re.search(r'name: "([^"]*)"', scheme.read_text())
-        stored = config_dir() / f"cosmic/com.system76.CosmicTerm/v1/color_schemes_{rice.mode}"
-        known = stored.read_text() if stored.is_file() else ""
-        if name and f'name: "{name.group(1)}"' not in known:
-            steps.append(f"COSMIC Terminal: View → Color schemes → {rice.mode.capitalize()} tab → Import {scheme}")
+    scheme = missing_scheme(rice)
+    if scheme:
+        steps.append(f"COSMIC Terminal: View → Color schemes → {rice.mode.capitalize()} tab → Import {scheme}")
     return steps
 
 

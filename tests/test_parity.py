@@ -21,6 +21,7 @@ PREVIOUS_ALT = "darkgold"
 
 
 VOLATILE = {".cache/bat/metadata.yaml"}  # bat stamps the build time in it
+CLI_ONLY = {f".config/cosmic/com.system76.CosmicTerm/v1/color_schemes_{mode}" for mode in ("dark", "light")}
 
 
 def seed(home: Path, rices: list, target, prev) -> None:
@@ -48,7 +49,7 @@ def tree(home: Path) -> dict:
     out = {}
     for p in sorted(home.rglob("*")):
         rel = str(p.relative_to(home))
-        if rel in VOLATILE:
+        if rel in VOLATILE | CLI_ONLY:
             continue
         if p.is_symlink():
             out[rel] = ("link", os.readlink(p))
