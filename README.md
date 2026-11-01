@@ -15,6 +15,7 @@ Flip the desktop to light and Noir becomes its light half, Dossier. Flip back an
 curl -fsSL https://raw.githubusercontent.com/atraxsrc/themebox/master/install.sh | bash
 themebox get noir            # download a rice and its other half
 themebox switch noir         # make it active
+themebox install-shell       # once: let a flip reload open zsh shells
 ```
 
 Then add Themebox in Settings → Desktop → Panel → Configure panel applets. It needs git, curl and

@@ -996,14 +996,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "themebox-applet"
-version = "0.1.0"
-dependencies = [
- "libcosmic",
- "tokio",
-]
-
-[[package]]
 name = "cosmic-settings-daemon"
 version = "0.1.0"
 source = "git+https://github.com/pop-os/dbus-settings-bindings#85502fb865695a15261a80dea0eef38a8c23e349"
@@ -4623,6 +4615,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "themebox-applet"
+version = "0.1.0"
+dependencies = [
+ "libcosmic",
+ "tokio",
 ]
 
 [[package]]
