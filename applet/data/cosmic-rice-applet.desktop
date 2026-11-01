@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Rice Flip
+Comment=Flip between the two halves of the current COSMIC rice
+Type=Application
+Exec=cosmic-rice-applet
+Terminal=false
+Categories=COSMIC;
+Keywords=COSMIC;Iced;
+Icon=weather-clear-night-symbolic
+StartupNotify=true
+NoDisplay=true
+X-CosmicApplet=true

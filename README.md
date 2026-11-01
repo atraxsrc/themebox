@@ -59,6 +59,17 @@ Restart=on-failure
 WantedBy=default.target
 ```
 
+## Panel applet
+
+`applet/` is a one-button panel applet that runs `cosmic-rice flip`. The icon shows the current mode, and
+the logic stays in the CLI. It needs Rust and the libcosmic build dependencies.
+
+```bash
+./applet/install.sh
+```
+
+Then add Rice Flip in Settings → Desktop → Panel → Configure panel applets.
+
 ## How it reads the rices
 
 Each rice's settings come from the block at the top of its `scripts/switch.sh`, and its pair from the

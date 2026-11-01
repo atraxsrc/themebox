@@ -1,0 +1,15 @@
+[package]
+name = "cosmic-rice-applet"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "One-click flip between the two halves of a COSMIC rice"
+
+[dependencies]
+tokio = { version = "1", features = ["process"] }
+
+[dependencies.libcosmic]
+git = "https://github.com/pop-os/libcosmic"
+rev = "08a09e3dfa1f729d52585fcedd6e731130235363"
+default-features = false
+features = ["applet", "tokio", "wayland"]
