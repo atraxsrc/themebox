@@ -1,11 +1,13 @@
-<img src="assets/logo.svg" alt="themebox logo: a moon and sun sharing one disc" width="96">
+<p align="center">
+  <img src="assets/logo.svg" alt="themebox logo: a moon and sun sharing one disc" width="200">
+</p>
 
 # themebox
 
 One command to list your [COSMIC rices](https://atraxsrc.github.io/cosmic-rices/), switch between them,
 and have the matching light or dark half follow COSMIC's toggle.
 
-![themebox list showing every rice, its mode and its pair, with Noir marked active](assets/list.png)
+[![Six rices from the gallery, three dark and three light](assets/gallery.jpg)](https://atraxsrc.github.io/cosmic-rices/)
 
 Flip the desktop to light and Noir becomes its light half, Dossier. Flip back and Noir returns:
 
