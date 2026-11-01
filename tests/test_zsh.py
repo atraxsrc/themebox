@@ -86,6 +86,18 @@ class Shell(FlipBase):
         os.write(fd, b"echo now=$RICE\n")
         self.assertNotIn("now=evil", self.drain(fd, 0.7))
 
+    def test_dangling_link_sources_nothing(self):
+        (self.root / "zsh").mkdir()
+        (self.root / "zsh/evil.zsh").write_text("export RICE=evil\n")  # the parent of HOME
+        pid, fd = self.spawn()
+        link = self.home / "update_system.sh"
+        link.unlink()
+        link.symlink_to("x")
+        cr.reload_zsh()
+        self.drain(fd, 0.5)
+        os.write(fd, b"echo now=$RICE\n")
+        self.assertNotIn("now=evil", self.drain(fd, 0.7))
+
     def test_unregistered_shell_gets_no_signal_and_lives(self):
         pid, fd = self.spawn(registered=False)
         cr.reload_zsh()

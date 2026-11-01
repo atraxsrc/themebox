@@ -6,7 +6,7 @@
 # updater link points into.
 TRAPUSR1() {
     local link=~/update_system.sh repo file
-    [[ -L $link ]] || return 0
+    [[ -L $link && -e $link ]] || return 0
     repo=${${link:A}:h:h}   # :A resolves against the link, never the shell's folder
     for file in $repo/zsh/*.zsh(N); do
         source $file
