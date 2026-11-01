@@ -66,6 +66,10 @@ SumiDay all 6). Read the current wallpaper. If it belongs to the active rice, us
 other half. Otherwise, or if that subject does not exist, use `<slug>-anime.png`, or else the first file
 in sorted order. A rice with no `backgrounds/` leaves the wallpaper alone.
 
+Leaving a rice records its wallpaper, and returning restores it if the file still exists. This comes
+before the rule above, so a wallpaper the owner chose survives a round trip. `cosmic-rice choose a b`
+overrides which two rices a flip goes between; a rice outside that choice keeps its own pair.
+
 ### zsh reload
 
 USR1 with no trap kills a zsh, so `pkill -USR1 zsh` would close terminals that started before this

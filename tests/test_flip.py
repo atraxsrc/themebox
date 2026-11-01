@@ -150,6 +150,35 @@ class Wallpaper(FlipBase):
         self.assertEqual(cr.apply_wallpaper(cr.find(rices, "dossier"), cr.find(rices, "noir")), [])
         self.assertIn("dossier-anime.png", (self.bg / "all").read_text())
 
+    def current(self):
+        return cr.WALLPAPER.search((self.bg / "all").read_text()).group(1)
+
+    def test_round_trip_returns_to_the_wallpaper_you_left(self):
+        mine = self.noir / "backgrounds/noir-anime-2.png"
+        mine.touch()
+        (self.bg / "all").write_text(ALL.replace("/old/place/wall.png", str(mine)))
+        self.flip()
+        self.assertEqual(self.current(), str(self.dossier / "backgrounds/dossier-anime.png"))
+        self.flip()
+        self.assertEqual(self.current(), str(mine))
+
+    def test_a_wallpaper_from_anywhere_is_remembered_too(self):
+        mine = self.root / "my.png"
+        mine.touch()
+        (self.bg / "all").write_text(ALL.replace("/old/place/wall.png", str(mine)))
+        self.flip()
+        self.flip()
+        self.assertEqual(self.current(), str(mine))
+
+    def test_a_remembered_file_that_is_gone_falls_back(self):
+        mine = self.root / "my.png"
+        mine.touch()
+        (self.bg / "all").write_text(ALL.replace("/old/place/wall.png", str(mine)))
+        self.flip()
+        mine.unlink()
+        self.flip()
+        self.assertEqual(self.current(), str(self.noir / "backgrounds/noir-anime.png"))
+
     def test_separate_monitors_become_a_manual_step(self):
         (self.bg / "same-on-all").write_text("false")
         rices = self.rices()

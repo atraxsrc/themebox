@@ -366,7 +366,12 @@ def apply_wallpaper(rice: Rice, previous: Rice) -> list[str]:
     if not found:
         return [manual]
     current = found.group(1).replace("\\\\", "\\")
-    chosen = pick_wallpaper(rice, previous, current)
+    memory = choice_file().parent / "wallpapers"
+    memory.mkdir(parents=True, exist_ok=True)
+    (memory / previous.slug).write_text(current)
+    kept = memory / rice.slug
+    remembered = Path(kept.read_text()) if kept.is_file() else None
+    chosen = remembered if remembered and remembered.is_file() else pick_wallpaper(rice, previous, current)
     if chosen is None:
         return []
     escaped = str(chosen).replace("\\", "\\\\").replace('"', '\\"')
