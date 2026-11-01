@@ -5,9 +5,9 @@
 # USR1 reloads the active rice's zsh file. The rice is whichever repo the
 # updater link points into.
 TRAPUSR1() {
-    local link repo file
-    link=$(readlink ~/update_system.sh) || return 0
-    repo=${link:h:h}
+    local link=~/update_system.sh repo file
+    [[ -L $link ]] || return 0
+    repo=${${link:A}:h:h}   # :A resolves against the link, never the shell's folder
     for file in $repo/zsh/*.zsh(N); do
         source $file
     done

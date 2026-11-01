@@ -71,6 +71,21 @@ class Shell(FlipBase):
         self.assertIn("now=dossier", out)
         self.assertTrue(self.alive(pid))
 
+    def test_relative_link_is_not_resolved_against_the_shells_folder(self):
+        trap = self.root / "elsewhere"
+        (trap / "a/b/zsh").mkdir(parents=True)
+        (trap / "a/b/zsh/evil.zsh").write_text("export RICE=evil\n")
+        pid, fd = self.spawn()
+        os.write(fd, f"cd {trap}\n".encode())
+        self.drain(fd, 0.4)
+        link = self.home / "update_system.sh"
+        link.unlink()
+        link.symlink_to("a/b/x")  # dangling from HOME, but real from the trap folder
+        cr.reload_zsh()
+        self.drain(fd, 0.5)
+        os.write(fd, b"echo now=$RICE\n")
+        self.assertNotIn("now=evil", self.drain(fd, 0.7))
+
     def test_unregistered_shell_gets_no_signal_and_lives(self):
         pid, fd = self.spawn(registered=False)
         cr.reload_zsh()

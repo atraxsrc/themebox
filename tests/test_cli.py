@@ -299,6 +299,14 @@ class Cli(Base):
         self.assertEqual(marked[0].split()[1::3], ["noir", "dossier"])
         self.assertEqual(len(out.strip().splitlines()), 4)
 
+    def test_relative_repos_folder_still_writes_an_absolute_link(self):
+        os.chdir(self.root)
+        self.addCleanup(os.chdir, Path(__file__).resolve().parent.parent)
+        with unittest.mock.patch.dict(os.environ, {"COSMIC_RICE_REPOS": "repos"}), \
+                contextlib.redirect_stdout(io.StringIO()):
+            cr.main(["switch", "noir"])
+        self.assertTrue(os.readlink(self.home / "update_system.sh").startswith("/"))
+
     def test_unknown_slug_exits_nonzero(self):
         buf = io.StringIO()
         with contextlib.redirect_stderr(buf):
