@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="805" height="544" viewBox="0 0 805 544" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="14">
+<rect width="805" height="544" rx="12" fill="#171717"/>
+<circle cx="22" cy="18" r="6" fill="#F25623"/><circle cx="42" cy="18" r="6" fill="#AEAB94"/><circle cx="62" cy="18" r="6" fill="#88A57D"/>
+<text x="402.4" y="23" fill="#7D837D" text-anchor="middle" font-size="13">themebox</text>
+<rect x="16.0" y="34" width="764.8" height="19" fill="#F56E0F"/>
+<text x="24.4" y="48" textLength="67.2" fill="#101010">themebox</text>
+<text x="108.4" y="48" textLength="8.4" fill="#101010">|</text>
+<text x="133.6" y="48" textLength="58.8" fill="#101010">active:</text>
+<text x="200.8" y="48" textLength="33.6" fill="#101010">Noir</text>
+<rect x="293.2" y="72" width="92.8" height="19" fill="#F56E0F"/>
+<text x="32.8" y="86" textLength="8.4" fill="#F56E0F">1</text>
+<text x="49.6" y="86" textLength="33.6" fill="#F56E0F">Rice</text>
+<text x="108.4" y="86" textLength="8.4" fill="#F56E0F">2</text>
+<text x="125.2" y="86" textLength="75.6" fill="#F56E0F">Wallpaper</text>
+<text x="226.0" y="86" textLength="8.4" fill="#F56E0F">3</text>
+<text x="242.8" y="86" textLength="33.6" fill="#F56E0F">Pair</text>
+<text x="301.6" y="86" textLength="8.4" fill="#101010">4</text>
+<text x="318.4" y="86" textLength="58.8" fill="#101010">Cursors</text>
+<text x="402.4" y="86" textLength="8.4" fill="#F56E0F">5</text>
+<text x="419.2" y="86" textLength="42.0" fill="#F56E0F">Icons</text>
+<text x="24.4" y="105" textLength="75.6" fill="#CCD0CF">Optional.</text>
+<text x="108.4" y="105" textLength="58.8" fill="#CCD0CF">Cursors</text>
+<text x="175.6" y="105" textLength="25.2" fill="#CCD0CF">for</text>
+<text x="209.2" y="105" textLength="42.0" fill="#CCD0CF">Noir.</text>
+<text x="259.6" y="105" textLength="33.6" fill="#CCD0CF">Asks</text>
+<text x="301.6" y="105" textLength="25.2" fill="#CCD0CF">for</text>
+<text x="335.2" y="105" textLength="42.0" fill="#CCD0CF">sudo,</text>
+<text x="385.6" y="105" textLength="25.2" fill="#CCD0CF">and</text>
+<text x="419.2" y="105" textLength="42.0" fill="#CCD0CF">shows</text>
+<text x="469.6" y="105" textLength="42.0" fill="#CCD0CF">after</text>
+<text x="520.0" y="105" textLength="8.4" fill="#CCD0CF">a</text>
+<text x="536.8" y="105" textLength="58.8" fill="#CCD0CF">reboot.</text>
+<text x="494.8" y="124" textLength="33.6" fill="#F56E0F">Sage</text>
+<text x="536.8" y="124" textLength="58.8" fill="#F56E0F">palette</text>
+<rect x="494.8" y="129" width="34.0" height="19" fill="#5B7551"/>
+<text x="41.2" y="143" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="143" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="143" textLength="33.6" fill="#CCD0CF">Keep</text>
+<text x="116.8" y="143" textLength="58.8" fill="#CCD0CF">current</text>
+<text x="192.4" y="143" textLength="151.2" fill="#CCD0CF">Oxygen-Noir-Orange</text>
+<text x="536.8" y="143" textLength="25.2" fill="#CCD0CF">Rim</text>
+<text x="679.6" y="143" textLength="58.8" fill="#CCD0CF">#5B7551</text>
+<rect x="494.8" y="148" width="34.0" height="19" fill="#98B08F"/>
+<text x="41.2" y="162" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="162" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="162" textLength="50.4" fill="#CCD0CF">Orange</text>
+<text x="142.0" y="162" textLength="16.8" fill="#CCD0CF">in</text>
+<text x="167.2" y="162" textLength="25.2" fill="#CCD0CF">use</text>
+<text x="536.8" y="162" textLength="33.6" fill="#CCD0CF">Body</text>
+<text x="679.6" y="162" textLength="58.8" fill="#CCD0CF">#98B08F</text>
+<rect x="24.4" y="167" width="445.6" height="19" fill="#F56E0F"/>
+<rect x="494.8" y="167" width="34.0" height="19" fill="#BACBB3"/>
+<text x="24.4" y="181" textLength="8.4" fill="#101010">&gt;</text>
+<text x="41.2" y="181" textLength="25.2" fill="#101010">(x)</text>
+<text x="74.8" y="181" textLength="33.6" fill="#101010">Sage</text>
+<text x="536.8" y="181" textLength="42.0" fill="#CCD0CF">Gloss</text>
+<text x="679.6" y="181" textLength="58.8" fill="#CCD0CF">#BACBB3</text>
+<text x="41.2" y="200" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="200" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="200" textLength="33.6" fill="#CCD0CF">Dark</text>
+<text x="24.4" y="485" textLength="50.4" fill="#CCD0CF">Apply:</text>
+<text x="83.2" y="485" textLength="50.4" fill="#CCD0CF">cursor</text>
+<text x="142.0" y="485" textLength="33.6" fill="#CCD0CF">Sage</text>
+<rect x="24.4" y="490" width="76.0" height="19" fill="#F56E0F"/>
+<text x="24.4" y="504" textLength="8.4" fill="#101010">[</text>
+<text x="41.2" y="504" textLength="42.0" fill="#101010">Apply</text>
+<text x="91.6" y="504" textLength="8.4" fill="#101010">]</text>
+<text x="108.4" y="504" textLength="8.4" fill="#CCD0CF">[</text>
+<text x="125.2" y="504" textLength="33.6" fill="#CCD0CF">Quit</text>
+<text x="167.2" y="504" textLength="8.4" fill="#CCD0CF">]</text>
+<rect x="16.0" y="509" width="764.8" height="19" fill="#F56E0F"/>
+<text x="24.4" y="523" textLength="33.6" fill="#101010">Tab:</text>
+<text x="66.4" y="523" textLength="33.6" fill="#101010">next</text>
+<text x="108.4" y="523" textLength="25.2" fill="#101010">tab</text>
+<text x="158.8" y="523" textLength="67.2" fill="#101010">Up/Down:</text>
+<text x="234.4" y="523" textLength="33.6" fill="#101010">move</text>
+<text x="293.2" y="523" textLength="50.4" fill="#101010">Space:</text>
+<text x="352.0" y="523" textLength="33.6" fill="#101010">pick</text>
+<text x="410.8" y="523" textLength="16.8" fill="#101010">a:</text>
+<text x="436.0" y="523" textLength="42.0" fill="#101010">apply</text>
+<text x="503.2" y="523" textLength="16.8" fill="#101010">q:</text>
+<text x="528.4" y="523" textLength="33.6" fill="#101010">quit</text>
+</svg>

@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="805" height="544" viewBox="0 0 805 544" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="14">
+<rect width="805" height="544" rx="12" fill="#171717"/>
+<circle cx="22" cy="18" r="6" fill="#F25623"/><circle cx="42" cy="18" r="6" fill="#AEAB94"/><circle cx="62" cy="18" r="6" fill="#88A57D"/>
+<text x="402.4" y="23" fill="#7D837D" text-anchor="middle" font-size="13">themebox</text>
+<rect x="16.0" y="34" width="764.8" height="19" fill="#F56E0F"/>
+<text x="24.4" y="48" textLength="67.2" fill="#101010">themebox</text>
+<text x="108.4" y="48" textLength="8.4" fill="#101010">|</text>
+<text x="133.6" y="48" textLength="58.8" fill="#101010">active:</text>
+<text x="200.8" y="48" textLength="33.6" fill="#101010">Noir</text>
+<rect x="217.6" y="72" width="67.6" height="19" fill="#F56E0F"/>
+<text x="32.8" y="86" textLength="8.4" fill="#F56E0F">1</text>
+<text x="49.6" y="86" textLength="33.6" fill="#F56E0F">Rice</text>
+<text x="108.4" y="86" textLength="8.4" fill="#F56E0F">2</text>
+<text x="125.2" y="86" textLength="75.6" fill="#F56E0F">Wallpaper</text>
+<text x="226.0" y="86" textLength="8.4" fill="#101010">3</text>
+<text x="242.8" y="86" textLength="33.6" fill="#101010">Pair</text>
+<text x="301.6" y="86" textLength="8.4" fill="#F56E0F">4</text>
+<text x="318.4" y="86" textLength="58.8" fill="#F56E0F">Cursors</text>
+<text x="402.4" y="86" textLength="8.4" fill="#F56E0F">5</text>
+<text x="419.2" y="86" textLength="42.0" fill="#F56E0F">Icons</text>
+<text x="24.4" y="105" textLength="25.2" fill="#CCD0CF">The</text>
+<text x="58.0" y="105" textLength="25.2" fill="#CCD0CF">two</text>
+<text x="91.6" y="105" textLength="42.0" fill="#CCD0CF">rices</text>
+<text x="142.0" y="105" textLength="33.6" fill="#CCD0CF">flip</text>
+<text x="184.0" y="105" textLength="42.0" fill="#CCD0CF">moves</text>
+<text x="234.4" y="105" textLength="67.2" fill="#CCD0CF">between,</text>
+<text x="310.0" y="105" textLength="25.2" fill="#CCD0CF">one</text>
+<text x="343.6" y="105" textLength="33.6" fill="#CCD0CF">dark</text>
+<text x="385.6" y="105" textLength="25.2" fill="#CCD0CF">and</text>
+<text x="419.2" y="105" textLength="25.2" fill="#CCD0CF">one</text>
+<text x="452.8" y="105" textLength="50.4" fill="#CCD0CF">light.</text>
+<text x="41.2" y="143" textLength="33.6" fill="#F56E0F">Dark</text>
+<text x="419.2" y="143" textLength="42.0" fill="#F56E0F">Light</text>
+<text x="41.2" y="162" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="162" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="162" textLength="33.6" fill="#CCD0CF">Each</text>
+<text x="116.8" y="162" textLength="50.4" fill="#CCD0CF">rice&#x27;s</text>
+<text x="175.6" y="162" textLength="25.2" fill="#CCD0CF">own</text>
+<text x="209.2" y="162" textLength="33.6" fill="#CCD0CF">pair</text>
+<text x="419.2" y="162" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="162" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="162" textLength="33.6" fill="#CCD0CF">Each</text>
+<text x="494.8" y="162" textLength="50.4" fill="#CCD0CF">rice&#x27;s</text>
+<text x="553.6" y="162" textLength="25.2" fill="#CCD0CF">own</text>
+<text x="587.2" y="162" textLength="33.6" fill="#CCD0CF">pair</text>
+<text x="41.2" y="181" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="181" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="181" textLength="42.0" fill="#CCD0CF">Blush</text>
+<text x="125.2" y="181" textLength="42.0" fill="#CCD0CF">Night</text>
+<text x="419.2" y="181" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="181" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="181" textLength="42.0" fill="#CCD0CF">Blush</text>
+<text x="41.2" y="200" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="200" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="200" textLength="42.0" fill="#CCD0CF">Brass</text>
+<text x="419.2" y="200" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="200" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="200" textLength="42.0" fill="#CCD0CF">Brass</text>
+<text x="503.2" y="200" textLength="25.2" fill="#CCD0CF">Day</text>
+<text x="41.2" y="219" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="219" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="219" textLength="50.4" fill="#CCD0CF">Cinder</text>
+<text x="419.2" y="219" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="219" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="219" textLength="50.4" fill="#CCD0CF">Cinder</text>
+<text x="511.6" y="219" textLength="25.2" fill="#CCD0CF">Day</text>
+<text x="41.2" y="238" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="238" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="238" textLength="67.2" fill="#CCD0CF">DarkGold</text>
+<text x="419.2" y="238" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="238" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="238" textLength="58.8" fill="#CCD0CF">Dossier</text>
+<text x="41.2" y="257" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="257" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="257" textLength="42.0" fill="#CCD0CF">Ember</text>
+<text x="419.2" y="257" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="257" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="257" textLength="42.0" fill="#CCD0CF">Ember</text>
+<text x="503.2" y="257" textLength="25.2" fill="#CCD0CF">Day</text>
+<text x="41.2" y="276" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="276" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="276" textLength="16.8" fill="#CCD0CF">K3</text>
+<text x="419.2" y="276" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="276" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="276" textLength="16.8" fill="#CCD0CF">K3</text>
+<text x="478.0" y="276" textLength="25.2" fill="#CCD0CF">Day</text>
+<text x="41.2" y="295" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="295" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="295" textLength="84.0" fill="#CCD0CF">Monochrome</text>
+<text x="419.2" y="295" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="295" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="295" textLength="84.0" fill="#CCD0CF">Monochrome</text>
+<text x="545.2" y="295" textLength="25.2" fill="#CCD0CF">Day</text>
+<text x="41.2" y="314" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="314" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="314" textLength="50.4" fill="#CCD0CF">Nebula</text>
+<text x="419.2" y="314" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="314" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="314" textLength="75.6" fill="#CCD0CF">NebulaDay</text>
+<text x="41.2" y="333" textLength="25.2" fill="#CCD0CF">(x)</text>
+<text x="74.8" y="333" textLength="33.6" fill="#CCD0CF">Noir</text>
+<text x="419.2" y="333" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="333" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="333" textLength="67.2" fill="#CCD0CF">PrismDay</text>
+<text x="41.2" y="352" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="352" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="352" textLength="42.0" fill="#CCD0CF">Prism</text>
+<text x="419.2" y="352" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="352" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="352" textLength="50.4" fill="#CCD0CF">Sorbet</text>
+<text x="511.6" y="352" textLength="25.2" fill="#CCD0CF">Day</text>
+<text x="41.2" y="371" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="371" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="371" textLength="50.4" fill="#CCD0CF">Sorbet</text>
+<text x="419.2" y="371" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="436.0" y="371" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="452.8" y="371" textLength="58.8" fill="#CCD0CF">SumiDay</text>
+<rect x="402.4" y="376" width="370.0" height="19" fill="#F56E0F"/>
+<text x="41.2" y="390" textLength="8.4" fill="#CCD0CF">(</text>
+<text x="58.0" y="390" textLength="8.4" fill="#CCD0CF">)</text>
+<text x="74.8" y="390" textLength="33.6" fill="#CCD0CF">Sumi</text>
+<text x="402.4" y="390" textLength="8.4" fill="#101010">&gt;</text>
+<text x="419.2" y="390" textLength="25.2" fill="#101010">(x)</text>
+<text x="452.8" y="390" textLength="42.0" fill="#101010">Tokyo</text>
+<text x="503.2" y="390" textLength="25.2" fill="#101010">Day</text>
+<text x="41.2" y="428" textLength="33.6" fill="#F56E0F">Noir</text>
+<text x="419.2" y="428" textLength="42.0" fill="#F56E0F">Tokyo</text>
+<text x="469.6" y="428" textLength="25.2" fill="#F56E0F">Day</text>
+<rect x="41.2" y="433" width="25.6" height="19" fill="#171717"/>
+<rect x="66.4" y="433" width="25.6" height="19" fill="#222222"/>
+<rect x="91.6" y="433" width="25.6" height="19" fill="#CCD0CF"/>
+<rect x="116.8" y="433" width="25.6" height="19" fill="#F25623"/>
+<rect x="142.0" y="433" width="25.6" height="19" fill="#F56E0F"/>
+<rect x="167.2" y="433" width="25.6" height="19" fill="#88A57D"/>
+<rect x="192.4" y="433" width="25.6" height="19" fill="#AEAB94"/>
+<rect x="217.6" y="433" width="25.6" height="19" fill="#959C95"/>
+<rect x="242.8" y="433" width="25.6" height="19" fill="#7D837D"/>
+<rect x="268.0" y="433" width="25.6" height="19" fill="#686C69"/>
+<rect x="293.2" y="433" width="25.6" height="19" fill="#525252"/>
+<rect x="419.2" y="433" width="17.2" height="19" fill="#E6E7ED"/>
+<rect x="436.0" y="433" width="17.2" height="19" fill="#DEE0E6"/>
+<rect x="452.8" y="433" width="17.2" height="19" fill="#D6D8DF"/>
+<rect x="469.6" y="433" width="17.2" height="19" fill="#343B59"/>
+<rect x="486.4" y="433" width="17.2" height="19" fill="#2959AA"/>
+<rect x="503.2" y="433" width="17.2" height="19" fill="#33635C"/>
+<rect x="520.0" y="433" width="17.2" height="19" fill="#8F5E15"/>
+<rect x="536.8" y="433" width="17.2" height="19" fill="#8C4351"/>
+<rect x="553.6" y="433" width="17.2" height="19" fill="#7B43BA"/>
+<rect x="570.4" y="433" width="17.2" height="19" fill="#006C86"/>
+<rect x="587.2" y="433" width="17.2" height="19" fill="#385F0D"/>
+<rect x="604.0" y="433" width="17.2" height="19" fill="#965027"/>
+<rect x="620.8" y="433" width="17.2" height="19" fill="#65359D"/>
+<rect x="637.6" y="433" width="17.2" height="19" fill="#707280"/>
+<rect x="654.4" y="433" width="17.2" height="19" fill="#888B94"/>
+<rect x="671.2" y="433" width="17.2" height="19" fill="#9DA0AB"/>
+<rect x="41.2" y="452" width="25.6" height="19" fill="#171717"/>
+<rect x="66.4" y="452" width="25.6" height="19" fill="#222222"/>
+<rect x="91.6" y="452" width="25.6" height="19" fill="#CCD0CF"/>
+<rect x="116.8" y="452" width="25.6" height="19" fill="#F25623"/>
+<rect x="142.0" y="452" width="25.6" height="19" fill="#F56E0F"/>
+<rect x="167.2" y="452" width="25.6" height="19" fill="#88A57D"/>
+<rect x="192.4" y="452" width="25.6" height="19" fill="#AEAB94"/>
+<rect x="217.6" y="452" width="25.6" height="19" fill="#959C95"/>
+<rect x="242.8" y="452" width="25.6" height="19" fill="#7D837D"/>
+<rect x="268.0" y="452" width="25.6" height="19" fill="#686C69"/>
+<rect x="293.2" y="452" width="25.6" height="19" fill="#525252"/>
+<rect x="419.2" y="452" width="17.2" height="19" fill="#E6E7ED"/>
+<rect x="436.0" y="452" width="17.2" height="19" fill="#DEE0E6"/>
+<rect x="452.8" y="452" width="17.2" height="19" fill="#D6D8DF"/>
+<rect x="469.6" y="452" width="17.2" height="19" fill="#343B59"/>
+<rect x="486.4" y="452" width="17.2" height="19" fill="#2959AA"/>
+<rect x="503.2" y="452" width="17.2" height="19" fill="#33635C"/>
+<rect x="520.0" y="452" width="17.2" height="19" fill="#8F5E15"/>
+<rect x="536.8" y="452" width="17.2" height="19" fill="#8C4351"/>
+<rect x="553.6" y="452" width="17.2" height="19" fill="#7B43BA"/>
+<rect x="570.4" y="452" width="17.2" height="19" fill="#006C86"/>
+<rect x="587.2" y="452" width="17.2" height="19" fill="#385F0D"/>
+<rect x="604.0" y="452" width="17.2" height="19" fill="#965027"/>
+<rect x="620.8" y="452" width="17.2" height="19" fill="#65359D"/>
+<rect x="637.6" y="452" width="17.2" height="19" fill="#707280"/>
+<rect x="654.4" y="452" width="17.2" height="19" fill="#888B94"/>
+<rect x="671.2" y="452" width="17.2" height="19" fill="#9DA0AB"/>
+<text x="24.4" y="485" textLength="50.4" fill="#CCD0CF">Apply:</text>
+<text x="83.2" y="485" textLength="33.6" fill="#CCD0CF">flip</text>
+<text x="125.2" y="485" textLength="33.6" fill="#CCD0CF">noir</text>
+<text x="167.2" y="485" textLength="25.2" fill="#CCD0CF">and</text>
+<text x="200.8" y="485" textLength="67.2" fill="#CCD0CF">tokyoday</text>
+<rect x="24.4" y="490" width="76.0" height="19" fill="#F56E0F"/>
+<text x="24.4" y="504" textLength="8.4" fill="#101010">[</text>
+<text x="41.2" y="504" textLength="42.0" fill="#101010">Apply</text>
+<text x="91.6" y="504" textLength="8.4" fill="#101010">]</text>
+<text x="108.4" y="504" textLength="8.4" fill="#CCD0CF">[</text>
+<text x="125.2" y="504" textLength="33.6" fill="#CCD0CF">Quit</text>
+<text x="167.2" y="504" textLength="8.4" fill="#CCD0CF">]</text>
+<rect x="16.0" y="509" width="764.8" height="19" fill="#F56E0F"/>
+<text x="24.4" y="523" textLength="33.6" fill="#101010">Tab:</text>
+<text x="66.4" y="523" textLength="33.6" fill="#101010">next</text>
+<text x="108.4" y="523" textLength="25.2" fill="#101010">tab</text>
+<text x="158.8" y="523" textLength="67.2" fill="#101010">Up/Down:</text>
+<text x="234.4" y="523" textLength="33.6" fill="#101010">move</text>
+<text x="293.2" y="523" textLength="50.4" fill="#101010">Space:</text>
+<text x="352.0" y="523" textLength="33.6" fill="#101010">pick</text>
+<text x="410.8" y="523" textLength="16.8" fill="#101010">a:</text>
+<text x="436.0" y="523" textLength="42.0" fill="#101010">apply</text>
+<text x="503.2" y="523" textLength="16.8" fill="#101010">q:</text>
+<text x="528.4" y="523" textLength="33.6" fill="#101010">quit</text>
+</svg>

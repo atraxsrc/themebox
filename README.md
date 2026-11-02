@@ -4,8 +4,9 @@
 
 <h1 align="center">Themebox</h1>
 
-One command to list your [COSMIC rices](https://atraxsrc.github.io/cosmic-rices/), switch between them,
-and have the matching light or dark half follow COSMIC's toggle.
+One command to browse your [COSMIC rices](https://atraxsrc.github.io/cosmic-rices/), switch between them,
+and have the matching light or dark half follow COSMIC's toggle. Pick from tabs in the terminal, or use
+plain commands.
 
 [![Six rices from the gallery, three dark and three light](assets/gallery.jpg)](https://atraxsrc.github.io/cosmic-rices/)
 
@@ -18,8 +19,8 @@ Flip the desktop to light and Noir becomes its light half, Dossier. Flip back an
 ```bash
 curl -fsSL https://raw.githubusercontent.com/atraxsrc/themebox/master/install.sh | bash
 themebox get noir            # download a rice and its other half
-themebox switch noir         # make it active
 themebox install-shell       # once: let a flip reload open zsh shells
+themebox                     # open the tabs, pick a rice, Apply
 ```
 
 Then add Themebox in Settings → Desktop → Panel → Configure panel applets. It needs git, curl and
@@ -37,6 +38,56 @@ To work on it, clone this repo next to the `cosmic-*-theme` repos and link `them
 `~/.local/bin` as `themebox`.
 
 ## Use
+
+Run `themebox` with nothing after it to open the tabs. Pick what you want on any of them, then Apply
+changes it all at once. Nothing changes until then, and the line above Apply says what it will do.
+
+![The Rice tab: a list of rices on the left, the highlighted rice's palette on the right, Tokyo Night picked](assets/tabs-rice.svg)
+
+| Press | To |
+| ----- | -- |
+| Click, or Space or Enter | pick the row |
+| Up and Down, `j` and `k`, the mouse wheel | move through a list |
+| Page Up, Page Down, Home, End | jump through a list |
+| Tab, Shift+Tab, `1` to `5` | change tab |
+| Left and Right, `h` and `l` | change tab, or column on Pair |
+| Click Apply, or `a` | apply and close |
+| Click Quit, `q` or Esc | leave without changing anything |
+
+| Tab | What you pick |
+| --- | ------------- |
+| Rice | The rice to change to. Its palette shows as you move, so you can browse without picking. |
+| Wallpaper | One of that rice's wallpapers, or keep what it has. |
+| Pair | The dark and light rice `flip` moves between, or each rice's own pair. |
+| Cursors | Optional. One of that rice's cursors, or keep yours. It asks for sudo and shows after a reboot. |
+| Icons | Optional. One of that rice's icon packs, or keep yours. Restart open apps to see a new one. |
+
+A new rice changes everything live like `flip`. Wallpaper, Cursors and Icons list what belongs to the
+rice you've picked, so picking another rice clears those three. Both optional tabs start on Keep current,
+and a later `flip` or `switch` still changes the icons.
+
+Apply closes the tabs first, so `sudo` can ask for your password in the terminal and you can read what
+happened. Without a terminal of at least 74 columns the palette beside the list is hidden, and below 18
+rows so are the bars on Pair.
+
+![The Pair tab: dark rices in one column and light rices in the other, with each one's palette as a bar underneath](assets/tabs-pair.svg)
+
+Cursors and Icons show the colours of the option you're on. Rice and Pair read a rice's palette from the
+table in its README, so a rice with no table shows none. A cursor's colours come from its own files, and
+an icon pack's from `icon-palettes.toml`, which `tools/icon_palettes.py` makes from
+[cosmic-icon-themes](https://github.com/atraxsrc/cosmic-icon-themes). A pack that isn't in that table
+shows the rice's palette instead.
+
+<table>
+  <tr>
+    <td><img src="assets/tabs-cursors.svg" alt="The Cursors tab: Sage highlighted, with its rim, body and gloss colours beside it"></td>
+    <td><img src="assets/tabs-icons.svg" alt="The Icons tab: Sage highlighted, with its folder, folder back and symbol colours beside it"></td>
+  </tr>
+</table>
+
+### Commands
+
+Everything also works as a plain command:
 
 ```bash
 themebox get noir            # download a rice and its other half

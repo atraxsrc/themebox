@@ -1,0 +1,713 @@
+# Made by tools/icon_palettes.py from cosmic-icon-themes. Do not edit by hand.
+
+[Cosmic-Blush-Crimson]
+"Folder" = "#A02B16"
+"Folder back" = "#782010"
+"Symbol" = "#F5E6D3"
+"Accent" = "#A02B16"
+"Trash" = "#A02B16"
+"Trash shade" = "#782010"
+
+[Cosmic-Blush-Dark]
+"Folder" = "#35302A"
+"Folder back" = "#756454"
+"Symbol" = "#9E4F5B"
+"Accent" = "#9E4F5B"
+"Trash" = "#756454"
+"Trash shade" = "#35302A"
+
+[Cosmic-Blush-Rose]
+"Folder" = "#9E4F5B"
+"Folder back" = "#763B44"
+"Symbol" = "#F5E6D3"
+"Accent" = "#9E4F5B"
+"Trash" = "#9E4F5B"
+"Trash shade" = "#763B44"
+
+[Cosmic-BlushNight-Crimson]
+"Folder" = "#E8735E"
+"Folder back" = "#AE5646"
+"Symbol" = "#17130E"
+"Accent" = "#E8735E"
+"Trash" = "#E8735E"
+"Trash shade" = "#AE5646"
+
+[Cosmic-BlushNight-Dark]
+"Folder" = "#312D28"
+"Folder back" = "#66615A"
+"Symbol" = "#CD7F8B"
+"Accent" = "#CD7F8B"
+"Trash" = "#66615A"
+"Trash shade" = "#312D28"
+
+[Cosmic-BlushNight-Rose]
+"Folder" = "#CD7F8B"
+"Folder back" = "#9A5F68"
+"Symbol" = "#17130E"
+"Accent" = "#CD7F8B"
+"Trash" = "#CD7F8B"
+"Trash shade" = "#9A5F68"
+
+[Cosmic-Brass-Brick]
+"Folder" = "#DD6A5C"
+"Folder back" = "#A65045"
+"Symbol" = "#1C1B19"
+"Accent" = "#DD6A5C"
+"Trash" = "#DD6A5C"
+"Trash shade" = "#A65045"
+
+[Cosmic-Brass-Dark]
+"Folder" = "#2C2925"
+"Folder back" = "#6B655C"
+"Symbol" = "#D4BD99"
+"Accent" = "#D4BD99"
+"Trash" = "#6B655C"
+"Trash shade" = "#2C2925"
+
+[Cosmic-Brass-Sand]
+"Folder" = "#D4BD99"
+"Folder back" = "#9F8E73"
+"Symbol" = "#1C1B19"
+"Accent" = "#D4BD99"
+"Trash" = "#D4BD99"
+"Trash shade" = "#9F8E73"
+
+[Cosmic-BrassDay-Brick]
+"Folder" = "#A63426"
+"Folder back" = "#7C271C"
+"Symbol" = "#F4ECD6"
+"Accent" = "#A63426"
+"Trash" = "#A63426"
+"Trash shade" = "#7C271C"
+
+[Cosmic-BrassDay-Dark]
+"Folder" = "#1D1C17"
+"Folder back" = "#67645B"
+"Symbol" = "#77603B"
+"Accent" = "#77603B"
+"Trash" = "#67645B"
+"Trash shade" = "#1D1C17"
+
+[Cosmic-BrassDay-Sand]
+"Folder" = "#77603B"
+"Folder back" = "#59482C"
+"Symbol" = "#F4ECD6"
+"Accent" = "#77603B"
+"Trash" = "#77603B"
+"Trash shade" = "#59482C"
+
+[Cosmic-Cinder-Brick]
+"Folder" = "#C75E57"
+"Folder back" = "#954641"
+"Symbol" = "#121212"
+"Accent" = "#C75E57"
+"Trash" = "#C75E57"
+"Trash shade" = "#954641"
+
+[Cosmic-Cinder-Dark]
+"Folder" = "#222228"
+"Folder back" = "#626A78"
+"Symbol" = "#CC6528"
+"Accent" = "#CC6528"
+"Trash" = "#626A78"
+"Trash shade" = "#222228"
+
+[Cosmic-Cinder-Orange]
+"Folder" = "#CC6528"
+"Folder back" = "#994C1E"
+"Symbol" = "#121212"
+"Accent" = "#CC6528"
+"Trash" = "#CC6528"
+"Trash shade" = "#994C1E"
+
+[Cosmic-CinderDay-Brick]
+"Folder" = "#9E352E"
+"Folder back" = "#762822"
+"Symbol" = "#E8E3E3"
+"Accent" = "#9E352E"
+"Trash" = "#9E352E"
+"Trash shade" = "#762822"
+
+[Cosmic-CinderDay-Dark]
+"Folder" = "#1B1A1A"
+"Folder back" = "#626060"
+"Symbol" = "#A33D00"
+"Accent" = "#A33D00"
+"Trash" = "#626060"
+"Trash shade" = "#1B1A1A"
+
+[Cosmic-CinderDay-Orange]
+"Folder" = "#A33D00"
+"Folder back" = "#7A2E00"
+"Symbol" = "#E8E3E3"
+"Accent" = "#A33D00"
+"Trash" = "#A33D00"
+"Trash shade" = "#7A2E00"
+
+[Cosmic-DarkGold-Dark]
+"Folder" = "#2A2A29"
+"Folder back" = "#7B7972"
+"Symbol" = "#C0AF7F"
+"Accent" = "#C0AF7F"
+"Trash" = "#7B7972"
+"Trash shade" = "#2A2A29"
+
+[Cosmic-DarkGold-Gold]
+"Folder" = "#C0AF7F"
+"Folder back" = "#90835F"
+"Symbol" = "#1B1B1B"
+"Accent" = "#C0AF7F"
+"Trash" = "#C0AF7F"
+"Trash shade" = "#90835F"
+
+[Cosmic-DarkGold-Red]
+"Folder" = "#E75A50"
+"Folder back" = "#AD443C"
+"Symbol" = "#1B1B1B"
+"Accent" = "#E75A50"
+"Trash" = "#E75A50"
+"Trash shade" = "#AD443C"
+
+[Cosmic-Dossier-Ink]
+"Folder" = "#242424"
+"Folder back" = "#59574D"
+"Symbol" = "#DE6A41"
+"Accent" = "#953B19"
+"Trash" = "#59574D"
+"Trash shade" = "#242424"
+
+[Cosmic-Dossier-Olive]
+"Folder" = "#51573B"
+"Folder back" = "#3D412C"
+"Symbol" = "#D0D0C8"
+"Accent" = "#51573B"
+"Trash" = "#51573B"
+"Trash shade" = "#3D412C"
+
+[Cosmic-Dossier-Rust]
+"Folder" = "#953B19"
+"Folder back" = "#702C13"
+"Symbol" = "#D0D0C8"
+"Accent" = "#953B19"
+"Trash" = "#953B19"
+"Trash shade" = "#702C13"
+
+[Cosmic-Ember-Dark]
+"Folder" = "#2A2F38"
+"Folder back" = "#7C8290"
+"Symbol" = "#E8713A"
+"Accent" = "#E8713A"
+"Trash" = "#7C8290"
+"Trash shade" = "#2A2F38"
+
+[Cosmic-Ember-Ember]
+"Folder" = "#E8713A"
+"Folder back" = "#AE552C"
+"Symbol" = "#15171C"
+"Accent" = "#E8713A"
+"Trash" = "#E8713A"
+"Trash shade" = "#AE552C"
+
+[Cosmic-Ember-Moss]
+"Folder" = "#8FB58A"
+"Folder back" = "#6B8868"
+"Symbol" = "#15171C"
+"Accent" = "#8FB58A"
+"Trash" = "#8FB58A"
+"Trash shade" = "#6B8868"
+
+[Cosmic-Ember-Slate]
+"Folder" = "#7FA3C7"
+"Folder back" = "#5F7A95"
+"Symbol" = "#15171C"
+"Accent" = "#7FA3C7"
+"Trash" = "#7FA3C7"
+"Trash shade" = "#5F7A95"
+
+[Cosmic-EmberDay-Ember]
+"Folder" = "#A4441A"
+"Folder back" = "#7B3314"
+"Symbol" = "#E9E6DF"
+"Accent" = "#A4441A"
+"Trash" = "#A4441A"
+"Trash shade" = "#7B3314"
+
+[Cosmic-EmberDay-Ink]
+"Folder" = "#2B2E36"
+"Folder back" = "#505156"
+"Symbol" = "#A4441A"
+"Accent" = "#A4441A"
+"Trash" = "#505156"
+"Trash shade" = "#2B2E36"
+
+[Cosmic-EmberDay-Moss]
+"Folder" = "#4C6B45"
+"Folder back" = "#395034"
+"Symbol" = "#E9E6DF"
+"Accent" = "#4C6B45"
+"Trash" = "#4C6B45"
+"Trash shade" = "#395034"
+
+[Cosmic-EmberDay-Slate]
+"Folder" = "#2F5C8A"
+"Folder back" = "#234568"
+"Symbol" = "#E9E6DF"
+"Accent" = "#2F5C8A"
+"Trash" = "#2F5C8A"
+"Trash shade" = "#234568"
+
+[Cosmic-K3-Dark]
+"Folder" = "#2C2C2D"
+"Folder back" = "#565D60"
+"Symbol" = "#798186"
+"Accent" = "#798186"
+"Trash" = "#565D60"
+"Trash shade" = "#2C2C2D"
+
+[Cosmic-K3-Steel]
+"Folder" = "#798186"
+"Folder back" = "#5B6164"
+"Symbol" = "#101315"
+"Accent" = "#798186"
+"Trash" = "#798186"
+"Trash shade" = "#5B6164"
+
+[Cosmic-K3-Terracotta]
+"Folder" = "#DE6145"
+"Folder back" = "#A64934"
+"Symbol" = "#101315"
+"Accent" = "#DE6145"
+"Trash" = "#DE6145"
+"Trash shade" = "#A64934"
+
+[Cosmic-K3Day-Dark]
+"Folder" = "#1A1B1B"
+"Folder back" = "#616161"
+"Symbol" = "#586065"
+"Accent" = "#586065"
+"Trash" = "#616161"
+"Trash shade" = "#1A1B1B"
+
+[Cosmic-K3Day-Steel]
+"Folder" = "#586065"
+"Folder back" = "#42484C"
+"Symbol" = "#E5E6E6"
+"Accent" = "#586065"
+"Trash" = "#586065"
+"Trash shade" = "#42484C"
+
+[Cosmic-K3Day-Terracotta]
+"Folder" = "#B03316"
+"Folder back" = "#842610"
+"Symbol" = "#E5E6E6"
+"Accent" = "#B03316"
+"Trash" = "#B03316"
+"Trash shade" = "#842610"
+
+[Cosmic-Monochrome-Dark]
+"Folder" = "#2A2A2A"
+"Folder back" = "#636363"
+"Symbol" = "#CCCCCC"
+"Accent" = "#AAAAAA"
+"Trash" = "#636363"
+"Trash shade" = "#2A2A2A"
+
+[Cosmic-Monochrome-Silver]
+"Folder" = "#AAAAAA"
+"Folder back" = "#808080"
+"Symbol" = "#111111"
+"Accent" = "#AAAAAA"
+"Trash" = "#AAAAAA"
+"Trash shade" = "#808080"
+
+[Cosmic-Monochrome-White]
+"Folder" = "#DDDDDD"
+"Folder back" = "#A6A6A6"
+"Symbol" = "#111111"
+"Accent" = "#DDDDDD"
+"Trash" = "#828282"
+"Trash shade" = "#626262"
+
+[Cosmic-MonochromeDay-Dark]
+"Folder" = "#1A1A1A"
+"Folder back" = "#616161"
+"Symbol" = "#E6E6E6"
+"Accent" = "#5C5C5C"
+"Trash" = "#616161"
+"Trash shade" = "#1A1A1A"
+
+[Cosmic-MonochromeDay-Graphite]
+"Folder" = "#424242"
+"Folder back" = "#323232"
+"Symbol" = "#E6E6E6"
+"Accent" = "#424242"
+"Trash" = "#424242"
+"Trash shade" = "#323232"
+
+[Cosmic-MonochromeDay-Silver]
+"Folder" = "#5C5C5C"
+"Folder back" = "#454545"
+"Symbol" = "#E6E6E6"
+"Accent" = "#5C5C5C"
+"Trash" = "#5C5C5C"
+"Trash shade" = "#454545"
+
+[Cosmic-Nebula-Dark]
+"Folder" = "#272C34"
+"Folder back" = "#5B6478"
+"Symbol" = "#4ECDC4"
+"Accent" = "#4ECDC4"
+"Trash" = "#5B6478"
+"Trash shade" = "#272C34"
+
+[Cosmic-Nebula-Rose]
+"Folder" = "#FF7B92"
+"Folder back" = "#BF5C6E"
+"Symbol" = "#181C22"
+"Accent" = "#FF7B92"
+"Trash" = "#FF7B92"
+"Trash shade" = "#BF5C6E"
+
+[Cosmic-Nebula-Teal]
+"Folder" = "#4ECDC4"
+"Folder back" = "#3A9A93"
+"Symbol" = "#181C22"
+"Accent" = "#4ECDC4"
+"Trash" = "#4ECDC4"
+"Trash shade" = "#3A9A93"
+
+[Cosmic-NebulaDay-Dark]
+"Folder" = "#2B2F35"
+"Folder back" = "#555F72"
+"Symbol" = "#186A61"
+"Accent" = "#186A61"
+"Trash" = "#555F72"
+"Trash shade" = "#2B2F35"
+
+[Cosmic-NebulaDay-Rose]
+"Folder" = "#A8243B"
+"Folder back" = "#7E1B2C"
+"Symbol" = "#E2E5E9"
+"Accent" = "#A8243B"
+"Trash" = "#A8243B"
+"Trash shade" = "#7E1B2C"
+
+[Cosmic-NebulaDay-Teal]
+"Folder" = "#186A61"
+"Folder back" = "#125049"
+"Symbol" = "#E2E5E9"
+"Accent" = "#186A61"
+"Trash" = "#186A61"
+"Trash shade" = "#125049"
+
+[Cosmic-Noir-Dark]
+"Folder" = "#2A2A2A"
+"Folder back" = "#686C69"
+"Symbol" = "#F25623"
+"Accent" = "#F25623"
+"Trash" = "#686C69"
+"Trash shade" = "#2A2A2A"
+
+[Cosmic-Noir-Orange]
+"Folder" = "#F25623"
+"Folder back" = "#B6401A"
+"Symbol" = "#171717"
+"Accent" = "#F25623"
+"Trash" = "#F25623"
+"Trash shade" = "#B6401A"
+
+[Cosmic-Noir-Sage]
+"Folder" = "#88A57D"
+"Folder back" = "#667C5E"
+"Symbol" = "#171717"
+"Accent" = "#88A57D"
+"Trash" = "#88A57D"
+"Trash shade" = "#667C5E"
+
+[Cosmic-Prism-Dark]
+"Folder" = "#161F33"
+"Folder back" = "#5A6B8C"
+"Symbol" = "#F7C3C6"
+"Accent" = "#F7C3C6"
+"Trash" = "#5A6B8C"
+"Trash shade" = "#161F33"
+
+[Cosmic-Prism-Petal]
+"Folder" = "#F7C3C6"
+"Folder back" = "#B99294"
+"Symbol" = "#060D1F"
+"Accent" = "#F7C3C6"
+"Trash" = "#F7C3C6"
+"Trash shade" = "#B99294"
+
+[Cosmic-Prism-Ruby]
+"Folder" = "#E95C4B"
+"Folder back" = "#AF4538"
+"Symbol" = "#060D1F"
+"Accent" = "#E95C4B"
+"Trash" = "#E95C4B"
+"Trash shade" = "#AF4538"
+
+[Cosmic-PrismDay-Dark]
+"Folder" = "#242B3D"
+"Folder back" = "#515B7C"
+"Symbol" = "#804C4F"
+"Accent" = "#804C4F"
+"Trash" = "#515B7C"
+"Trash shade" = "#242B3D"
+
+[Cosmic-PrismDay-Petal]
+"Folder" = "#804C4F"
+"Folder back" = "#60393B"
+"Symbol" = "#DFEAEC"
+"Accent" = "#804C4F"
+"Trash" = "#804C4F"
+"Trash shade" = "#60393B"
+
+[Cosmic-PrismDay-Ruby]
+"Folder" = "#B52817"
+"Folder back" = "#881E11"
+"Symbol" = "#DFEAEC"
+"Accent" = "#B52817"
+"Trash" = "#B52817"
+"Trash shade" = "#881E11"
+
+[Cosmic-Sorbet-Dark]
+"Folder" = "#1A1727"
+"Folder back" = "#5E616C"
+"Symbol" = "#B2FFF3"
+"Accent" = "#B2FFF3"
+"Trash" = "#5E616C"
+"Trash shade" = "#1A1727"
+
+[Cosmic-Sorbet-Mint]
+"Folder" = "#B2FFF3"
+"Folder back" = "#86BFB6"
+"Symbol" = "#05080A"
+"Accent" = "#B2FFF3"
+"Trash" = "#B2FFF3"
+"Trash shade" = "#86BFB6"
+
+[Cosmic-Sorbet-Rose]
+"Folder" = "#FF9FBC"
+"Folder back" = "#BF778D"
+"Symbol" = "#05080A"
+"Accent" = "#FF9FBC"
+"Trash" = "#FF9FBC"
+"Trash shade" = "#BF778D"
+
+[Cosmic-SorbetDay-Dark]
+"Folder" = "#1B1A1B"
+"Folder back" = "#635F63"
+"Symbol" = "#1C685C"
+"Accent" = "#1C685C"
+"Trash" = "#635F63"
+"Trash shade" = "#1B1A1B"
+
+[Cosmic-SorbetDay-Mint]
+"Folder" = "#1C685C"
+"Folder back" = "#154E45"
+"Symbol" = "#E9E2E9"
+"Accent" = "#1C685C"
+"Trash" = "#1C685C"
+"Trash shade" = "#154E45"
+
+[Cosmic-SorbetDay-Rose]
+"Folder" = "#963653"
+"Folder back" = "#70283E"
+"Symbol" = "#E9E2E9"
+"Accent" = "#963653"
+"Trash" = "#963653"
+"Trash shade" = "#70283E"
+
+[Cosmic-Sumi-Dark]
+"Folder" = "#1E1E1E"
+"Folder back" = "#5F5D58"
+"Symbol" = "#8B9388"
+"Accent" = "#8B9388"
+"Trash" = "#5F5D58"
+"Trash shade" = "#1E1E1E"
+
+[Cosmic-Sumi-Moss]
+"Folder" = "#8B9388"
+"Folder back" = "#686E66"
+"Symbol" = "#050505"
+"Accent" = "#8B9388"
+"Trash" = "#8B9388"
+"Trash shade" = "#686E66"
+
+[Cosmic-Sumi-Vermilion]
+"Folder" = "#DA614E"
+"Folder back" = "#A4493A"
+"Symbol" = "#050505"
+"Accent" = "#DA614E"
+"Trash" = "#DA614E"
+"Trash shade" = "#A4493A"
+
+[Cosmic-SumiDay-Dark]
+"Folder" = "#1C1B19"
+"Folder back" = "#64615E"
+"Symbol" = "#566658"
+"Accent" = "#566658"
+"Trash" = "#64615E"
+"Trash shade" = "#1C1B19"
+
+[Cosmic-SumiDay-Moss]
+"Folder" = "#566658"
+"Folder back" = "#404C42"
+"Symbol" = "#EDE8DE"
+"Accent" = "#566658"
+"Trash" = "#566658"
+"Trash shade" = "#404C42"
+
+[Cosmic-SumiDay-Vermilion]
+"Folder" = "#AC3320"
+"Folder back" = "#812618"
+"Symbol" = "#EDE8DE"
+"Accent" = "#AC3320"
+"Trash" = "#AC3320"
+"Trash shade" = "#812618"
+
+[Cosmic-TokyoDay-Blue]
+"Folder" = "#2959AA"
+"Folder back" = "#1F4380"
+"Symbol" = "#E6E7ED"
+"Accent" = "#2959AA"
+"Trash" = "#2959AA"
+"Trash shade" = "#1F4380"
+
+[Cosmic-TokyoDay-Green]
+"Folder" = "#33635C"
+"Folder back" = "#264A45"
+"Symbol" = "#E6E7ED"
+"Accent" = "#33635C"
+"Trash" = "#33635C"
+"Trash shade" = "#264A45"
+
+[Cosmic-TokyoDay-Ink]
+"Folder" = "#343B59"
+"Folder back" = "#565C75"
+"Symbol" = "#2959AA"
+"Accent" = "#2959AA"
+"Trash" = "#565C75"
+"Trash shade" = "#343B59"
+
+[Cosmic-TokyoDay-Purple]
+"Folder" = "#7B43BA"
+"Folder back" = "#5C328C"
+"Symbol" = "#E6E7ED"
+"Accent" = "#7B43BA"
+"Trash" = "#7B43BA"
+"Trash shade" = "#5C328C"
+
+[Cosmic-TokyoNight-Blue]
+"Folder" = "#7AA2F7"
+"Folder back" = "#5C7AB9"
+"Symbol" = "#1A1B26"
+"Accent" = "#7AA2F7"
+"Trash" = "#7AA2F7"
+"Trash shade" = "#5C7AB9"
+
+[Cosmic-TokyoNight-Dark]
+"Folder" = "#292E42"
+"Folder back" = "#545C7E"
+"Symbol" = "#7AA2F7"
+"Accent" = "#7AA2F7"
+"Trash" = "#545C7E"
+"Trash shade" = "#292E42"
+
+[Cosmic-TokyoNight-Green]
+"Folder" = "#9ECE6A"
+"Folder back" = "#769A50"
+"Symbol" = "#1A1B26"
+"Accent" = "#9ECE6A"
+"Trash" = "#9ECE6A"
+"Trash shade" = "#769A50"
+
+[Cosmic-TokyoNight-Purple]
+"Folder" = "#BB9AF7"
+"Folder back" = "#8C74B9"
+"Symbol" = "#1A1B26"
+"Accent" = "#BB9AF7"
+"Trash" = "#BB9AF7"
+"Trash shade" = "#8C74B9"
+
+[Cosmic-Tweed-Brick]
+"Folder" = "#E77D6C"
+"Folder back" = "#AD5E51"
+"Symbol" = "#292B31"
+"Accent" = "#E77D6C"
+"Trash" = "#E77D6C"
+"Trash shade" = "#AD5E51"
+
+[Cosmic-Tweed-Dark]
+"Folder" = "#363840"
+"Folder back" = "#6B6B6E"
+"Symbol" = "#BDA07F"
+"Accent" = "#BDA07F"
+"Trash" = "#6B6B6E"
+"Trash shade" = "#363840"
+
+[Cosmic-Tweed-Tan]
+"Folder" = "#BDA07F"
+"Folder back" = "#8E785F"
+"Symbol" = "#292B31"
+"Accent" = "#BDA07F"
+"Trash" = "#BDA07F"
+"Trash shade" = "#8E785F"
+
+[Cosmic-TweedDay-Brick]
+"Folder" = "#B32A19"
+"Folder back" = "#862013"
+"Symbol" = "#E9E6E2"
+"Accent" = "#B32A19"
+"Trash" = "#B32A19"
+"Trash shade" = "#862013"
+
+[Cosmic-TweedDay-Dark]
+"Folder" = "#2C2E34"
+"Folder back" = "#655F58"
+"Symbol" = "#76593D"
+"Accent" = "#76593D"
+"Trash" = "#655F58"
+"Trash shade" = "#2C2E34"
+
+[Cosmic-TweedDay-Tan]
+"Folder" = "#76593D"
+"Folder back" = "#58432E"
+"Symbol" = "#E9E6E2"
+"Accent" = "#76593D"
+"Trash" = "#76593D"
+"Trash shade" = "#58432E"
+
+[Cosmic-WhiteGold-Gold]
+"Folder" = "#655628"
+"Folder back" = "#4C401E"
+"Symbol" = "#DEDBC8"
+"Accent" = "#655628"
+"Trash" = "#655628"
+"Trash shade" = "#4C401E"
+
+[Cosmic-WhiteGold-Ink]
+"Folder" = "#0C0C14"
+"Folder back" = "#665E4A"
+"Symbol" = "#C9A227"
+"Accent" = "#7A6410"
+"Trash" = "#665E4A"
+"Trash shade" = "#0C0C14"
+
+[Cosmic-WhiteGold-Red]
+"Folder" = "#7A1F22"
+"Folder back" = "#5C171A"
+"Symbol" = "#DEDBC8"
+"Accent" = "#7A1F22"
+"Trash" = "#7A1F22"
+"Trash shade" = "#5C171A"
+
+[Cosmic-WhiteGold-Slate]
+"Folder" = "#4A545A"
+"Folder back" = "#383F44"
+"Symbol" = "#DEDBC8"
+"Accent" = "#4A545A"
+"Trash" = "#4A545A"
+"Trash shade" = "#383F44"

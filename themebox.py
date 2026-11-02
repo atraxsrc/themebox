@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Switch between COSMIC rices: the cosmic-*-theme repos next to this one.
 
+  themebox                      tabs for rice, wallpaper, pair, cursors and icons
   themebox list                 every rice, * marks the active one
   themebox switch <slug>        make a rice active
   themebox wallpaper <slug>     list a rice's wallpapers
@@ -20,11 +21,13 @@ folder that holds this repo. Older ones keep their settings in scripts/switch.sh
 """
 import argparse
 import contextlib
+import curses
 import io
 import os
 import re
 import shutil
 import signal
+import struct
 import subprocess
 import sys
 import tempfile
@@ -51,6 +54,9 @@ THEME_COLORS = ("neutral_tint", "bg_color", "primary_container_bg", "secondary_c
 TK_LOOK = ("apply_theme_global", "icon_theme", "interface_font", "monospace_font", "show_maximize", "show_minimize")
 ZSH_SOURCE = r"^\s*#?\s*(?:source|\.)\s.*"
 ZSH_ANY = re.compile(ZSH_SOURCE + r"(?:cosmic-[a-z0-9]+-theme/zsh/[a-z0-9]+\.zsh|ricing/zsh/colors\.zsh)")
+XCURSOR_IMAGE = 0xfffd0002  # the chunk type of one image in a cursor file
+COLOUR_ROW = re.compile(r"^\|\s*([^|]+?)\s*\|\s*!\[#([0-9a-fA-F]{6})\]\([^)]*\)\s*([^|]*?)\s*\|", re.M)
+PANEL_WIDTH = 34  # the palette beside a list, shown once the terminal has room
 
 
 class Error(Exception):
@@ -742,6 +748,11 @@ def flip(rices: list[Rice], keep_icons: bool = False, pick: bool = False) -> boo
     if target is None:
         raise Error(f"{current.name} has no pair")
     chosen = ask_wallpaper(target) if pick else None
+    return go_live(target, current, rices, keep_icons, chosen)
+
+
+def go_live(target: Rice, current: Rice | None, rices: list[Rice], keep_icons: bool, chosen: Path | None) -> bool:
+    """Make target active and change everything live. False if any step failed."""
     # switch comes first so a running pair --watch already sees the new half
     log = io.StringIO()
     with contextlib.redirect_stdout(log):
@@ -767,9 +778,504 @@ def print_list(rices: list[Rice]) -> None:
         print(f"\nflip goes between {chosen[0].slug} and {chosen[1].slug}")
 
 
+def palette(rice: Rice) -> list[tuple[str, str, str]]:
+    """A rice's colours as (role, #HEX, name): the README table the gallery reads too."""
+    readme = rice.repo / "README.md"
+    text = readme.read_text() if readme.is_file() else ""
+    section = text.split("## Palette", 1)[1].split("\n## ", 1)[0] if "## Palette" in text else ""
+    start = section.find("| Role")
+    colours: dict[str, tuple[str, str, str]] = {}
+    # the first table is the palette, a later one compares the pair
+    for role, code, label in COLOUR_ROW.findall(section[start:].split("\n\n", 1)[0] if start >= 0 else ""):
+        code = f"#{code.upper()}"
+        colours.setdefault(code, (role, code, re.sub(r"!\[[^\]]*\]\([^)]*\)", "", label).strip()))
+    return list(colours.values())
+
+
+def icon_colours(pack: str) -> list[tuple[str, str, str]]:
+    """An icon pack's colours, from the table that tools/icon_palettes.py writes."""
+    table = Path(__file__).resolve().parent / "icon-palettes.toml"
+    colours: dict[str, tuple[str, str, str]] = {}
+    for role, code in (tomllib.loads(table.read_text()).get(pack, {}) if table.is_file() else {}).items():
+        colours.setdefault(code, (role, code, ""))
+    return list(colours.values())
+
+
+def cursor_colours(theme: Path) -> list[tuple[str, str, str]]:
+    """A cursor's rim, body and gloss, read from the pixels of its arrow at its largest size."""
+    try:
+        data = (theme / "cursors/left_ptr").read_bytes()
+        header, _, count = struct.unpack_from("<III", data, 4)
+        chunks = [struct.unpack_from("<III", data, header + i * 12) for i in range(count)]
+        _, _, start = max(chunk for chunk in chunks if chunk[0] == XCURSOR_IMAGE)
+        width, height = struct.unpack_from("<II", data, start + 16)
+        pixels = struct.iter_unpack("BBBB", data[start + 36:start + 36 + width * height * 4])
+        # the border and outline are the same white and black on every cursor
+        solid = sorted((r + g + b, f"#{r:02X}{g:02X}{b:02X}") for b, g, r, a in pixels if a == 255 and 15 < r + g + b < 750)
+    except (OSError, ValueError, struct.error):
+        return []
+    if not solid:
+        return []
+    return [(role, solid[int((len(solid) - 1) * place)][1], "")
+            for role, place in (("Rim", .05), ("Body", .5), ("Gloss", .95))]
+
+
+def variants(rice: Rice, tool: str) -> list[str]:
+    """The colours a rice's cursor or icon installer offers."""
+    if not has_tool(rice, tool):
+        return []
+    try:
+        done = subprocess.run([f"./{tool}/install.sh", "--list"], cwd=rice.repo, stdin=subprocess.DEVNULL,
+                              capture_output=True, text=True, timeout=5)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    return done.stdout.split() if done.returncode == 0 else []
+
+
+def cursor_in_use() -> str:
+    """The cursor theme set for the next login."""
+    env = Path("/etc/environment")
+    found = re.search(r"^XCURSOR_THEME=(.*)$", env.read_text(), re.M) if env.is_file() else None
+    return found.group(1).strip("\"' ") if found else ""
+
+
+def icons_in_use() -> str:
+    return value(config_dir() / "cosmic/com.system76.CosmicTk/v1/icon_theme")
+
+
+def cursor_name(rice: Rice, variant: str) -> str:
+    return next((p.name for p in (rice.repo / "cursors").glob(f"*-{variant}") if p.is_dir()), "")
+
+
+def icon_name(rice: Rice, variant: str) -> str:
+    default = value(rice.repo / "cosmic/config/com.system76.CosmicTk/v1/icon_theme")
+    return f"{default.rsplit('-', 1)[0]}-{variant}" if default else ""
+
+
+def run_installer(rice: Rice, tool: str, variant: str) -> bool:
+    """Run a cursor or icon installer on the terminal, so sudo can ask for a password."""
+    print(f"\n{tool.capitalize()}: {variant}")
+    return subprocess.run([f"./{tool}/install.sh", "--variant", variant], cwd=rice.repo).returncode == 0
+
+
+class Choices:
+    """What the screen has picked so far. A field left None keeps what is there now."""
+
+    def __init__(self, rices: list[Rice]):
+        self.rices = sorted(rices, key=lambda r: r.slug)
+        self.current = active(rices)
+        self.rice = self.current
+        self.wallpaper: Path | None = None
+        self.cursor: str | None = None
+        self.icons: str | None = None
+        chosen = chosen_pair(rices) or ()
+        self.saved_pair = (next((r.slug for r in chosen if r.mode == "dark"), None),
+                           next((r.slug for r in chosen if r.mode == "light"), None))
+        self.dark, self.light = self.saved_pair
+        self.cached: dict[tuple[str, str], list[str]] = {}
+        self.palettes: dict[str, list[tuple[str, str, str]]] = {}
+
+    def colours(self, rice: Rice) -> list[tuple[str, str, str]]:
+        return self.palettes.setdefault(rice.slug, palette(rice))
+
+    def option_colours(self, tab: str, option: str) -> list[tuple[str, str, str]]:
+        """The colours of one cursor or icon option. Empty if they are not known."""
+        key = f"{self.rice.slug}/{tab}/{option}"
+        if key not in self.palettes:
+            self.palettes[key] = (icon_colours(icon_name(self.rice, option)) if tab == "Icons" else
+                                  cursor_colours(self.rice.repo / "cursors" / cursor_name(self.rice, option)))
+        return self.palettes[key]
+
+    def panel(self, tab: str, option: object) -> tuple[str, list[tuple[str, str, str]]] | None:
+        """The title and colours for the row under the cursor. Keep current means what is in use."""
+        if tab == "Rice":
+            return (option.name, self.colours(option)) if option else None
+        if self.rice is None:
+            return None
+        option = option or next((row[0] for row in self.rows(tab) if row[2] == "in use"), None)
+        colours = self.option_colours(tab, option) if option else []
+        return (option, colours) if colours else (self.rice.name, self.colours(self.rice))
+
+    def pair_shown(self, side: str, slug: str | None) -> Rice | None:
+        """The rice to show under a Pair column: the cursor's row, else what flip would use now."""
+        slug = slug or self.selected("Pair", side)
+        if slug:
+            return find(self.rices, slug)
+        if self.current is None or self.current.mode == side:
+            return self.current
+        return partner(self.current, self.rices)
+
+    def options(self, tool: str) -> list[str]:
+        key = (self.rice.slug if self.rice else "", tool)
+        if key not in self.cached:
+            self.cached[key] = variants(self.rice, tool) if self.rice else []
+        return self.cached[key]
+
+    def rows(self, tab: str, side: str = "dark") -> list[tuple[object, str, str]]:
+        """One tab's rows as (value, label, note). Column side is for the Pair tab."""
+        rice = self.rice
+        if tab == "Rice":
+            return [(r, f"{r.name:<18}{r.mode:<7}", "active" if r == self.current else "") for r in self.rices]
+        if tab == "Pair":
+            return [(None, "Each rice's own pair", "")] + [(r.slug, r.name, "") for r in self.rices if r.mode == side]
+        if rice is None:
+            return []
+        if tab == "Wallpaper":
+            live = rice == self.current
+            marked = desktop_wallpaper() if live else remembered(rice)
+            return [(None, "Keep current" if live else "Saved or default", "")] + [
+                (path, short_name(rice, path), "in use" if live and str(path) == str(marked)
+                 else "saved" if str(path) == str(marked) else "") for path in backgrounds(rice)]
+        if tab == "Cursors":
+            now = cursor_in_use()
+            return [(None, "Keep current", now)] + [
+                (v, v, "in use" if now and cursor_name(rice, v) == now else "") for v in self.options("cursors")]
+        now = icons_in_use()
+        return [(None, "Keep current", now)] + [
+            (v, v, "in use" if icon_name(rice, v) == now else "installed" if icons_installed(icon_name(rice, v))
+             else "downloads") for v in self.options("icons")]
+
+    def selected(self, tab: str, side: str = "dark") -> object:
+        return {"Rice": self.rice, "Wallpaper": self.wallpaper, "Cursors": self.cursor, "Icons": self.icons,
+                "Pair": self.dark if side == "dark" else self.light}[tab]
+
+    def pick(self, tab: str, picked: object, side: str = "dark") -> None:
+        if tab == "Rice":
+            if picked != self.rice:
+                self.rice, self.wallpaper, self.cursor, self.icons = picked, None, None, None
+        elif tab == "Wallpaper":
+            self.wallpaper = picked
+        elif tab == "Cursors":
+            self.cursor = picked
+        elif tab == "Icons":
+            self.icons = picked
+        elif picked is None:
+            self.dark = self.light = None
+        else:
+            self.pick_half(picked, side)
+
+    def pick_half(self, slug: str, side: str) -> None:
+        """Set one half of the pair. An empty other half starts as this rice's own pair."""
+        if side == "dark":
+            self.dark = slug
+            self.light = self.light or find(self.rices, slug).pair
+        else:
+            self.light = slug
+            self.dark = self.dark or find(self.rices, slug).pair
+
+    def pair_changed(self) -> bool:
+        return (self.dark, self.light) != self.saved_pair
+
+    def pending(self) -> list[str]:
+        """What Apply would do, in words."""
+        changes = []
+        if self.rice and self.rice != self.current:
+            changes.append(f"switch to {self.rice.name}")
+        if self.wallpaper:
+            changes.append(f"wallpaper {short_name(self.rice, self.wallpaper)}")
+        if self.pair_changed():
+            changes.append(f"flip {self.dark} and {self.light}" if self.dark and self.light else "flip own pairs")
+        if self.cursor:
+            changes.append(f"cursor {self.cursor}")
+        if self.icons:
+            changes.append(f"icons {self.icons}")
+        return changes
+
+    def problem(self) -> str | None:
+        if bool(self.dark) != bool(self.light):
+            return f"Pair: pick a {'light' if self.dark else 'dark'} rice too"
+        return None
+
+
+def apply_choices(c: Choices) -> bool:
+    """Do what was picked, on the plain terminal. False if any step failed."""
+    ok = True
+    if c.pair_changed():
+        if c.dark:
+            choose(c.rices, c.dark, c.light)
+            print(f"flip goes between {c.dark} and {c.light}")
+        else:
+            reset_choice()
+            print("flip uses each rice's own pair")
+    if c.rice and c.rice != c.current:
+        ok = go_live(c.rice, c.current, c.rices, True, c.wallpaper)  # the Icons tab decides the icons
+    elif c.wallpaper:
+        for message in save_wallpaper(c.rice, c.wallpaper, True):
+            print(f"  {message}")
+    if c.icons:
+        ok = run_installer(c.rice, "icons", c.icons) and ok
+    if c.cursor:
+        ok = run_installer(c.rice, "cursors", c.cursor) and ok
+    return ok
+
+
+class Screen:
+    """The tabs. It only fills in a Choices: the work happens after curses has closed."""
+    TABS = ("Rice", "Wallpaper", "Pair", "Cursors", "Icons")
+    SIDES = ("dark", "light")
+
+    def __init__(self, scr, choices: Choices):
+        self.scr, self.c = scr, choices
+        self.tab = 0
+        self.side = 0  # which Pair column has the cursor
+        here = choices.rices.index(choices.current) if choices.current else 0
+        self.at: dict[tuple[str, str], int] = {("Rice", "dark"): here}  # the cursor row of each list
+        self.top: dict[tuple[str, str], int] = {}
+        self.hits: list[tuple[int, int, int, tuple]] = []  # y, x from, x to, what a click there does
+        self.blocks: list[tuple[int, int, int, str]] = []  # y, x, width, #HEX of each colour block
+        self.status = ""
+        self.colors = curses.has_colors() and not os.environ.get("NO_COLOR")
+        if self.colors:
+            curses.start_color()
+            try:
+                curses.use_default_colors()
+                back = -1
+            except curses.error:
+                back = curses.COLOR_BLACK
+            curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_BLUE)  # from the terminal's palette, so it matches
+            curses.init_pair(2, curses.COLOR_BLUE, back)
+            curses.init_pair(3, curses.COLOR_RED, back)
+        with contextlib.suppress(curses.error):
+            curses.curs_set(0)
+        scr.keypad(True)
+        curses.mousemask(curses.ALL_MOUSE_EVENTS)
+        curses.mouseinterval(0)  # report a press at once rather than waiting to see if it is a click
+
+    def bar(self) -> int:
+        return curses.color_pair(1) if self.colors else curses.A_REVERSE
+
+    def tint(self, pair: int) -> int:
+        return curses.color_pair(pair) if self.colors else curses.A_BOLD
+
+    def put(self, y: int, x: int, text: str, attr: int = 0, click: tuple | None = None) -> None:
+        h, w = self.scr.getmaxyx()
+        if not (0 <= y < h and 0 <= x < w - 1):
+            return
+        text = text[:w - x - 1]
+        with contextlib.suppress(curses.error):
+            self.scr.addstr(y, x, text, attr)
+        if click:
+            self.hits.append((y, x, x + len(text), click))
+
+    def block(self, y: int, x: int, width: int, code: str) -> None:
+        """Mark cells for a colour. curses has no 24-bit colours, so paint_blocks fills them in.
+
+        curses gets a stand-in character so it knows the cells are in use, and clears them when
+        the block goes. If it thought they were empty, a block would stay on screen for good.
+        """
+        h, w = self.scr.getmaxyx()
+        width = min(width, w - x - 1)
+        if not self.colors or not (0 <= y < h) or width <= 0:
+            return
+        self.put(y, x, "#" * width)
+        self.blocks.append((y, x, width, code))
+
+    def paint_blocks(self) -> None:
+        """Save the cursor and restore it after, because curses tracks where it left it."""
+        cells = "".join("\x1b[{};{}H\x1b[48;2;{};{};{}m{}".format(
+            y + 1, x + 1, *bytes.fromhex(code[1:]), " " * width) for y, x, width, code in self.blocks)
+        if cells:
+            sys.stdout.write(f"\x1b7{cells}\x1b[0m\x1b8")
+            sys.stdout.flush()
+
+    def draw_panel(self, title: str, colours: list[tuple[str, str, str]], x: int, y: int, height: int) -> None:
+        """A palette, one colour a line."""
+        self.put(y, x, f"{title} palette", self.tint(2))
+        if not colours:
+            self.put(y + 2, x, "None in its README.")
+        for row, (role, code, _) in enumerate(colours[:height - 1], 1):
+            self.block(y + row, x, 4, code)
+            self.put(y + row, x + 5, f"{role[:16]:<17}{code}")
+
+    def draw_strip(self, rice: Rice | None, x: int, y: int, width: int) -> None:
+        """A rice's whole palette as one bar, two lines tall."""
+        if rice is None:
+            return
+        self.put(y, x + 2, rice.name, self.tint(2))
+        colours = self.c.colours(rice)
+        size = max(1, min(3, (width - 2) // max(1, len(colours))))
+        for row in (y + 1, y + 2):
+            for number, (_, code, _) in enumerate(colours):
+                if x + 2 + (number + 1) * size <= x + width:
+                    self.block(row, x + 2 + number * size, size, code)
+
+    def rice_at(self, tab: str, side: str = "dark") -> object:
+        """The value on the cursor's row of a list, once draw_list has clamped it."""
+        rows = self.c.rows(tab, side)
+        row = self.at.get((tab, side), 0)
+        return rows[row][0] if row < len(rows) else None
+
+    def lists(self) -> list[tuple[int, str]]:
+        """The current tab's lists, as (column, side)."""
+        return list(enumerate(self.SIDES)) if self.TABS[self.tab] == "Pair" else [(0, "dark")]
+
+    def subtitle(self) -> str:
+        tab = self.TABS[self.tab]
+        name = self.c.rice.name if self.c.rice else "the rice"
+        return {"Rice": "The rice to change to. Apply changes the theme, apps and open shells live.",
+                "Wallpaper": f"Wallpapers for {name}.",
+                "Pair": "The two rices flip moves between, one dark and one light.",
+                "Cursors": f"Optional. Cursors for {name}. Asks for sudo, and shows after a reboot.",
+                "Icons": f"Optional. Icon packs for {name}. Restart open apps to see a new one."}[tab]
+
+    def draw_list(self, tab: str, side: str, x: int, width: int, y: int, height: int, focused: bool) -> None:
+        rows = self.c.rows(tab, side)
+        key = (tab, side)
+        cur = self.at[key] = max(0, min(self.at.get(key, 0), len(rows) - 1))
+        top = self.top.get(key, 0)
+        top = cur if cur < top else cur - height + 1 if cur >= top + height else top
+        self.top[key] = top = max(0, min(top, max(0, len(rows) - height)))
+        picked = self.c.selected(tab, side)
+        if tab == "Pair":
+            self.put(y - 1, x + 2, side.capitalize(), self.tint(2))
+        for row, (option, label, note) in list(enumerate(rows))[top:top + height]:
+            text = f"{'>' if focused and row == cur else ' '} ({'x' if option == picked else ' '}) {label}"
+            text = f"{text}  {note}" if note else text
+            attr = self.bar() if focused and row == cur else 0
+            self.put(y + row - top, x, text[:width].ljust(width), attr, ("row", tab, side, row))
+        if not rows:
+            self.put(y, x + 2, "Pick a rice first.")
+        elif len(rows) == 1 and tab != "Rice":
+            self.put(y + 1, x + 2, "This rice has none.")
+
+    def draw(self) -> None:
+        h, w = self.scr.getmaxyx()
+        self.hits, self.blocks = [], []
+        self.scr.erase()
+        now = self.c.current.name if self.c.current else "none"
+        self.put(0, 0, f" themebox  |  active: {now}".ljust(w - 1), self.bar())
+        x = 1
+        for number, tab in enumerate(self.TABS):
+            label = f" {number + 1} {tab} "
+            self.put(2, x, label, self.bar() if number == self.tab else self.tint(2), ("tab", number))
+            x += len(label) + 1
+        self.put(3, 1, self.subtitle())
+        tab = self.TABS[self.tab]
+        lists = self.lists()
+        top = 6 if tab == "Pair" else 5
+        height = max(1, h - top - 3)
+        strips = tab == "Pair" and h >= 18  # below that the list needs the room more
+        panel = tab in ("Rice", "Cursors", "Icons") and w >= PANEL_WIDTH + 40
+        width = max(1, (w - 2) // len(lists) - 1) - (PANEL_WIDTH + 2 if panel else 0)
+        for column, side in lists:
+            self.draw_list(tab, side, 1 + column * (width + 1), width, top, height - 4 if strips else height,
+                           column == self.side or len(lists) == 1)
+            if strips:
+                self.draw_strip(self.c.pair_shown(side, self.rice_at(tab, side)), 1 + column * (width + 1), h - 6, width)
+        shown = self.c.panel(tab, self.rice_at(tab)) if panel else None
+        if shown:
+            self.draw_panel(*shown, w - PANEL_WIDTH - 1, top - 1, height + 1)
+        changes = self.c.pending()
+        self.put(h - 3, 1, self.status or ("Apply: " + ", ".join(changes) if changes else "Nothing to apply yet."),
+                 self.tint(3) if self.status else 0)
+        self.put(h - 2, 1, "[ Apply ]", self.bar() if changes else 0, ("apply",))
+        self.put(h - 2, 11, "[ Quit ]", 0, ("quit",))
+        self.put(h - 1, 0, " Tab: next tab   Up/Down: move   Space: pick   a: apply   q: quit".ljust(w - 1), self.bar())
+        self.scr.refresh()
+        self.paint_blocks()
+
+    def focus(self) -> tuple[str, str]:
+        tab = self.TABS[self.tab]
+        return tab, self.SIDES[self.side] if tab == "Pair" else "dark"
+
+    def go_tab(self, number: int) -> None:
+        self.tab = number % len(self.TABS)
+        self.side = 0
+
+    def move(self, step: int) -> None:
+        key = self.focus()
+        self.at[key] = self.at.get(key, 0) + step
+
+    def sideways(self, step: int) -> None:
+        """Left and right change tabs, and on Pair cross the columns first."""
+        side = self.side + step
+        if self.TABS[self.tab] == "Pair" and side in (0, 1):
+            self.side = side
+        else:
+            self.go_tab(self.tab + step)
+
+    def pick(self, tab: str, side: str, row: int) -> None:
+        rows = self.c.rows(tab, side)
+        if row < len(rows):
+            self.c.pick(tab, rows[row][0], side)
+
+    def apply(self) -> bool:
+        """True if the screen should close and the changes run."""
+        self.status = self.c.problem() or ("" if self.c.pending() else "Nothing to apply yet.")
+        return not self.status
+
+    def click(self) -> str | None:
+        with contextlib.suppress(curses.error):
+            _, x, y, _, state = curses.getmouse()
+            if state & curses.BUTTON4_PRESSED:
+                self.move(-3)
+            elif state & getattr(curses, "BUTTON5_PRESSED", 0):
+                self.move(3)
+            elif state & (curses.BUTTON1_PRESSED | curses.BUTTON1_CLICKED):
+                self.status = ""
+                return next((self.press(hit) for row, left, right, hit in self.hits
+                             if row == y and left <= x < right), None)
+        return None
+
+    def press(self, hit: tuple) -> str | None:
+        if hit[0] == "tab":
+            self.go_tab(hit[1])
+        elif hit[0] == "row":
+            _, tab, side, row = hit
+            self.side = self.SIDES.index(side) if tab == "Pair" else 0
+            self.at[(tab, side)] = row
+            self.pick(tab, side, row)
+        elif hit[0] == "apply" and self.apply():
+            return "apply"
+        elif hit[0] == "quit":
+            return "quit"
+        return None
+
+    def run(self) -> bool:
+        """True if Apply was pressed."""
+        keys = {curses.KEY_UP: lambda: self.move(-1), ord("k"): lambda: self.move(-1),
+                curses.KEY_DOWN: lambda: self.move(1), ord("j"): lambda: self.move(1),
+                curses.KEY_PPAGE: lambda: self.move(-10), curses.KEY_NPAGE: lambda: self.move(10),
+                curses.KEY_HOME: lambda: self.move(-10**6), curses.KEY_END: lambda: self.move(10**6),
+                curses.KEY_LEFT: lambda: self.sideways(-1), ord("h"): lambda: self.sideways(-1),
+                curses.KEY_RIGHT: lambda: self.sideways(1), ord("l"): lambda: self.sideways(1),
+                ord("\t"): lambda: self.go_tab(self.tab + 1), curses.KEY_BTAB: lambda: self.go_tab(self.tab - 1)}
+        while True:
+            self.draw()
+            key = self.scr.getch()
+            action = None
+            if key != curses.KEY_MOUSE:  # a click's release must not wipe what the click said
+                self.status = ""
+            if key in (ord("q"), 27):
+                return False
+            if key == curses.KEY_MOUSE:
+                action = self.click()
+            elif key == ord("a"):
+                action = "apply" if self.apply() else None
+            elif key in (ord(" "), 10, 13, curses.KEY_ENTER):
+                tab, side = self.focus()
+                self.pick(tab, side, self.at.get((tab, side), 0))
+            elif ord("1") <= key < ord("1") + len(self.TABS):
+                self.go_tab(key - ord("1"))
+            elif key in keys:
+                keys[key]()
+            if action:
+                return action == "apply"
+
+
+def open_screen(rices: list[Rice]) -> bool:
+    """Run the tabs, then apply what they picked. False if a step failed."""
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        raise Error("the tabs need a terminal, see: themebox --help")
+    os.environ.setdefault("ESCDELAY", "25")  # or Esc waits a full second to prove it is not an arrow key
+    choices = Choices(rices)
+    return not curses.wrapper(lambda scr: Screen(scr, choices).run()) or apply_choices(choices)
+
+
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="themebox", description="Switch between COSMIC rices.")
-    sub = ap.add_subparsers(dest="command", required=True)
+    ap = argparse.ArgumentParser(prog="themebox", description="Switch between COSMIC rices. "
+                                 "With no command, opens tabs to pick from and apply.")
+    sub = ap.add_subparsers(dest="command")
     sub.add_parser("list", help="every rice, * marks the active one")
     p = sub.add_parser("switch", help="make a rice active")
     p.add_argument("slug")
@@ -806,6 +1312,8 @@ def main(argv: list[str] | None = None) -> int:
         rices = discover(repos)
         if not rices:
             raise Error(f"no rices in {repos} yet: themebox get <slug>, see {GALLERY}")
+        if args.command is None:
+            return 0 if open_screen(rices) else 1
         if args.command == "list":
             print_list(rices)
         elif args.command == "switch":
@@ -845,7 +1353,7 @@ def main(argv: list[str] | None = None) -> int:
                 time.sleep(args.interval)
         elif follow(rices, args.keep_icons) is None:
             print(f"{active(rices).name} already matches COSMIC's mode")
-    except (Error, OSError) as err:
+    except (Error, OSError, curses.error) as err:
         print(f"themebox: {err}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:
