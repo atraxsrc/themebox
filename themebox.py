@@ -54,6 +54,7 @@ THEME_COLORS = ("neutral_tint", "bg_color", "primary_container_bg", "secondary_c
 TK_LOOK = ("apply_theme_global", "icon_theme", "interface_font", "monospace_font", "show_maximize", "show_minimize")
 ZSH_SOURCE = r"^\s*#?\s*(?:source|\.)\s.*"
 ZSH_ANY = re.compile(ZSH_SOURCE + r"(?:cosmic-[a-z0-9]+-theme/zsh/[a-z0-9]+\.zsh|ricing/zsh/colors\.zsh)")
+VARIANT_LIST = re.compile(r"^VARIANTS=\(([^)]*)\)", re.M)
 XCURSOR_IMAGE = 0xfffd0002  # the chunk type of one image in a cursor file
 COLOUR_ROW = re.compile(r"^\|\s*([^|]+?)\s*\|\s*!\[#([0-9a-fA-F]{6})\]\([^)]*\)\s*([^|]*?)\s*\|", re.M)
 PANEL_WIDTH = 34  # the palette beside a list, shown once the terminal has room
@@ -821,15 +822,14 @@ def cursor_colours(theme: Path) -> list[tuple[str, str, str]]:
 
 
 def variants(rice: Rice, tool: str) -> list[str]:
-    """The colours a rice's cursor or icon installer offers."""
-    if not has_tool(rice, tool):
-        return []
-    try:
-        done = subprocess.run([f"./{tool}/install.sh", "--list"], cwd=rice.repo, stdin=subprocess.DEVNULL,
-                              capture_output=True, text=True, timeout=5)
-    except (OSError, subprocess.SubprocessError):
-        return []
-    return done.stdout.split() if done.returncode == 0 else []
+    """The colours a rice's cursor or icon installer offers.
+
+    Read from the script as text, never by running it: browsing must not run a rice's code.
+    """
+    script = rice.repo / tool / "install.sh"
+    found = VARIANT_LIST.search(script.read_text(errors="replace")) if has_tool(rice, tool) else None
+    names = found.group(1).split() if found else []
+    return names if all(re.fullmatch(r"[A-Za-z0-9_-]+", name) for name in names) else []
 
 
 def cursor_in_use() -> str:

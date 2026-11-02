@@ -85,8 +85,7 @@ class TuiBase(FlipBase):
             for tool in ("cursors", "icons"):
                 script = repo / tool / "install.sh"
                 script.parent.mkdir()
-                script.write_text('#!/bin/sh\nif [ "$1" = --list ]; then echo Orange; echo Sage; exit 0; fi\n'
-                                  f'echo "{tool} {name} $*" >> "{self.calls}"\n')
+                script.write_text(f'#!/usr/bin/env bash\nVARIANTS=(Orange Sage)\necho "{tool} {name} $*" >> "{self.calls}"\n')
                 script.chmod(script.stat().st_mode | stat.S_IXUSR)
             (repo / f"cursors/Oxygen-{name}-Sage").mkdir()
             (repo / "cosmic/config/com.system76.CosmicTk/v1/icon_theme").write_text(f'"Fake-{name}-Orange"')
@@ -142,6 +141,17 @@ class Rows(TuiBase):
         self.assertEqual({r[1]: r[2] for r in c.rows("Icons")[1:]}, {"Orange": "downloads", "Sage": "downloads"})
         (self.home / ".local/share/icons/Fake-Noir-Sage").mkdir(parents=True)
         self.assertEqual(c.rows("Icons")[2][2], "installed")
+
+    def test_browsing_never_runs_a_rice_script(self):
+        c = self.choices()
+        for tab in ("Cursors", "Icons"):
+            c.rows(tab)
+            c.panel(tab, "Sage")
+        self.assertFalse(self.calls.exists())
+
+    def test_a_variant_list_with_an_odd_name_is_ignored(self):
+        (self.noir / "cursors/install.sh").write_text('#!/bin/sh\nVARIANTS=(Sage "$(touch x)" ../up)\n')
+        self.assertEqual(cr.variants(cr.find(self.rices(), "noir"), "cursors"), [])
 
     def test_a_rice_without_cursors_only_offers_keep(self):
         c = self.choices()
