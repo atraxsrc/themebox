@@ -92,8 +92,9 @@ WantedBy=default.target
 
 ## Panel applet
 
-`applet/` is a one-button panel applet that runs `themebox flip`. The icon shows the current mode, and
-the logic stays in the CLI. It needs Rust and the libcosmic build dependencies.
+`applet/` is a one-button panel applet that runs `themebox flip`. The icon is the logo's half moon in
+dark mode and its half sun in light mode, and the logic stays in the CLI. It needs Rust and the libcosmic
+build dependencies.
 
 ```bash
 ./applet/install.sh

@@ -4,17 +4,34 @@ use std::process::Stdio;
 
 use cosmic::app::{Core, Task};
 use cosmic::cosmic_theme::ThemeMode;
+use cosmic::widget::icon;
 use cosmic::Element;
 
 const APP_ID: &str = "io.github.atraxsrc.ThemeboxApplet";
 
+// The two halves of assets/logo.svg. Built in, because the prebuilt applet installs as a lone binary.
+const MOON: &[u8] = include_bytes!("../data/icons/moon-symbolic.svg");
+const SUN: &[u8] = include_bytes!("../data/icons/sun-symbolic.svg");
+
+#[derive(Debug, PartialEq)]
+enum PanelIcon {
+    Moon,
+    Sun,
+    Busy,
+}
+
 /// The icon for the current state: what the desktop is, or that a flip is running.
-fn icon_name(is_dark: bool, busy: bool) -> &'static str {
+fn panel_icon(is_dark: bool, busy: bool) -> PanelIcon {
     match (busy, is_dark) {
-        (true, _) => "content-loading-symbolic",
-        (false, true) => "weather-clear-night-symbolic",
-        (false, false) => "weather-clear-symbolic",
+        (true, _) => PanelIcon::Busy,
+        (false, true) => PanelIcon::Moon,
+        (false, false) => PanelIcon::Sun,
     }
+}
+
+/// Symbolic, so the panel tints it with its own text colour on every rice.
+fn logo_half(svg: &'static [u8]) -> icon::Handle {
+    icon::from_svg_bytes(svg).symbolic(true)
 }
 
 /// The installed command if it is in ~/.local/bin, otherwise whatever PATH finds.
@@ -90,11 +107,13 @@ impl cosmic::Application for Applet {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        self.core
-            .applet
-            .icon_button(icon_name(self.is_dark, self.busy))
-            .on_press(Message::Clicked)
-            .into()
+        let applet = &self.core.applet;
+        let button = match panel_icon(self.is_dark, self.busy) {
+            PanelIcon::Moon => applet.icon_button_from_handle(logo_half(MOON)),
+            PanelIcon::Sun => applet.icon_button_from_handle(logo_half(SUN)),
+            PanelIcon::Busy => applet.icon_button("content-loading-symbolic"),
+        };
+        button.on_press(Message::Clicked).into()
     }
 
     fn style(&self) -> Option<cosmic::iced::theme::Style> {
@@ -112,14 +131,20 @@ mod tests {
 
     #[test]
     fn icon_shows_the_mode() {
-        assert_eq!(icon_name(true, false), "weather-clear-night-symbolic");
-        assert_eq!(icon_name(false, false), "weather-clear-symbolic");
+        assert_eq!(panel_icon(true, false), PanelIcon::Moon);
+        assert_eq!(panel_icon(false, false), PanelIcon::Sun);
     }
 
     #[test]
     fn busy_wins_over_the_mode() {
-        assert_eq!(icon_name(true, true), "content-loading-symbolic");
-        assert_eq!(icon_name(false, true), "content-loading-symbolic");
+        assert_eq!(panel_icon(true, true), PanelIcon::Busy);
+        assert_eq!(panel_icon(false, true), PanelIcon::Busy);
+    }
+
+    #[test]
+    fn logo_halves_take_the_panel_colour() {
+        assert!(logo_half(MOON).symbolic);
+        assert!(logo_half(SUN).symbolic);
     }
 
     #[test]
