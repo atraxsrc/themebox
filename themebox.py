@@ -40,7 +40,7 @@ SETTING = re.compile(r'^(NAME|MODE|RON|TERM_RON|BTOP)="([^"]*)"', re.M)
 OLD_SETTINGS = {"NAME": "name", "MODE": "mode", "RON": "theme", "TERM_RON": "terminal", "BTOP": "btop"}
 REQUIRED = ("name", "mode", "theme")
 PAIR = re.compile(r"https://github\.com/[^/\s]+/(cosmic-[a-z0-9]+-theme)")
-TOOLS = ("fastfetch", "lsd", "bat", "starship", "kitty", "alacritty", "wezterm", "ghostty",
+TOOLS = ("fonts", "fastfetch", "lsd", "bat", "starship", "kitty", "alacritty", "wezterm", "ghostty",
          "delta", "lazygit", "helix", "gtk", "qt", "discord")
 LEGACY_NVIM = ("harbordark",)  # the old hand-installed spec, parked like any other
 GALLERY = "https://atraxsrc.github.io/cosmic-rices/"

@@ -187,7 +187,7 @@ Everything else is optional too, and anything a rice doesn't have is skipped:
 - `backgrounds/` holds its wallpapers. `<name>-anime.png` is the default, else the first file.
 - `cosmic/config/` is copied over `~/.config/cosmic`: fonts, terminal look, icon theme.
 - `<tool>/install.sh` runs for each tool it styles: `nvim`, `zsh`, `firefox`, `claude-desktop`, and
-  `fastfetch`, `lsd`, `bat`, `starship`, `kitty`, `alacritty`, `wezterm`, `ghostty`, `delta`, `lazygit`,
+  `fonts` (installs the font files the theme names), `fastfetch`, `lsd`, `bat`, `starship`, `kitty`, `alacritty`, `wezterm`, `ghostty`, `delta`, `lazygit`,
   `helix`, `gtk`, `qt`, `discord`.
 
 Without a `zsh` folder your `~/.zshrc` is left alone, and without an `nvim` folder so is your Neovim

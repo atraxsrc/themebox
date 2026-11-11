@@ -49,7 +49,8 @@ def tree(home: Path) -> dict:
     out = {}
     for p in sorted(home.rglob("*")):
         rel = str(p.relative_to(home))
-        if rel in VOLATILE | CLI_ONLY:
+        # fc-cache stamps its cache files, so two runs never match byte for byte
+        if rel in VOLATILE | CLI_ONLY or rel.startswith(".cache/fontconfig/"):
             continue
         if p.is_symlink():
             out[rel] = ("link", os.readlink(p))
