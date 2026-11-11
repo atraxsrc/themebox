@@ -80,6 +80,14 @@ class Wallpaper(Newer):
         msgs = cr.apply_wallpaper(cr.find(rices, "dossier"), cr.find(rices, "noir"))
         self.assertTrue(msgs and msgs[0].startswith("Wallpaper:"))
 
+    def test_separate_monitors_are_not_seeded_from_the_shared_one(self):
+        (self.walls["Light"] / "all").unlink()
+        (self.walls["Light"] / "same-on-all").write_text("false")
+        rices = self.rices()
+        msgs = cr.apply_wallpaper(cr.find(rices, "dossier"), cr.find(rices, "noir"))
+        self.assertTrue(msgs and msgs[0].startswith("Wallpaper:"))
+        self.assertFalse((self.walls["Light"] / "all").exists())
+
     def test_the_wallpaper_in_use_is_the_current_modes(self):
         self.assertEqual(cr.desktop_wallpaper(), "/old/place/wall.png")
         cr.mode_file().write_text("false\n")
@@ -118,6 +126,37 @@ class Icons(Newer):
             cr.flip(self.rices(), keep_icons=True)
         self.assertEqual(self.icons(PARTS[2]), '"Papirus"')
         self.assertEqual((self.conf / "cosmic/com.system76.CosmicTk/v1/icon_theme").read_text(), '"Papirus"')
+
+    def import_sets_icons(self, name):
+        sets = "".join(f'printf \'"{name}"\' > "$HOME/.config/cosmic/{part}/icon_theme"\n' for part in PARTS[2:])
+        self.stub("cosmic-settings", sets)
+
+    def test_a_rice_with_no_icon_setting_keeps_the_ones_its_theme_names(self):
+        (self.dossier / "cosmic/config/com.system76.CosmicTk/v1/icon_theme").unlink()
+        self.switch("noir", steps=False)  # leaves Noir's icons in CosmicTk
+        self.import_sets_icons("Papirus")
+        ok, _ = self.flip()
+        self.assertTrue(ok)
+        self.assertEqual(self.icons(PARTS[2]), '"Papirus"')
+
+    def test_keep_icons_holds_for_a_rice_with_no_icon_setting(self):
+        (self.dossier / "cosmic/config/com.system76.CosmicTk/v1/icon_theme").unlink()
+        for part in PARTS[:2]:
+            (self.conf / "cosmic" / part / "icon_theme").write_text('"Mine"')
+        self.import_sets_icons("Papirus")
+        with contextlib.redirect_stdout(io.StringIO()):
+            cr.flip(self.rices(), keep_icons=True)
+        self.assertEqual(self.icons(PARTS[2]), '"Mine"')
+
+    def test_icons_put_right_in_the_theme_alone_are_reported(self):
+        tk = self.conf / "cosmic/com.system76.CosmicTk/v1/icon_theme"
+        tk.parent.mkdir(parents=True, exist_ok=True)
+        tk.write_text('"Kanagawa-Dossier-Orange"')
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            cr.apply_cosmic(cr.find(self.rices(), "dossier"), False)
+        self.assertIn("cosmic: icons Kanagawa-Dossier-Orange", out.getvalue())
+        self.assertEqual(self.icons(PARTS[2]), '"Kanagawa-Dossier-Orange"')
 
     def test_a_missing_default_falls_back_to_another_colour_of_the_pack(self):
         # COSMIC's own grey icons were showing, as after an import reset them
@@ -200,6 +239,12 @@ done
 
     def test_a_saved_wallpaper_goes_on_the_card(self):
         cr.remember(cr.find(self.rices(), "noir"), str(self.noir / "backgrounds/noir-city.png"))
+        self.cards()
+        self.assertIn("noir-city.png", (self.card("noir", "Background") / "v1/all").read_text())
+
+    def test_the_active_rices_card_gets_the_wallpaper_showing(self):
+        (self.walls["Dark"] / "all").write_text(ALL.replace("/old/place/wall.png",
+                                                            str(self.noir / "backgrounds/noir-city.png")))
         self.cards()
         self.assertIn("noir-city.png", (self.card("noir", "Background") / "v1/all").read_text())
 

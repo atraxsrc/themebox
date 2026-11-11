@@ -198,6 +198,8 @@ def seed_wallpaper(folder: Path) -> None:
     shared = shared_wallpaper_folder()
     if folder == shared or (folder / "all").is_file() or not (shared / "all").is_file():
         return
+    if value(folder / "same-on-all") == "false":  # one wallpaper per monitor: not ours to fill
+        return
     for key in ("all", "same-on-all"):
         if (shared / key).is_file() and not (folder / key).is_file():
             shutil.copyfile(shared / key, folder / key)
@@ -328,13 +330,15 @@ def apply_cosmic(rice: Rice, keep_icons: bool) -> None:
             if stay is not None:
                 print(f"  cosmic: icons stay {have or 'default'}{stay}")
             chosen = have if stay is not None else want
+            in_theme = theme_icons(rice.mode)
+            changed = chosen != value(dest) or (in_theme is not None and value(in_theme) != chosen)
             if chosen and chosen != value(dest):  # CosmicTk is what flip puts back after the import
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 if dest.is_file():
                     backup(dest)
                 dest.write_text(f'"{chosen}"')
-                if stay is None:
-                    print(f"  cosmic: icons {chosen}")
+            if chosen and changed and stay is None:
+                print(f"  cosmic: icons {chosen}")
             set_theme_icons(rice.mode, chosen)
             continue
         backup_copy(src, dest)
@@ -585,9 +589,12 @@ def make_cards(rices: list[Rice]) -> bool:
     Each card is made by cosmic-settings itself in a throwaway home, so nothing live changes,
     then copied in over any card of the same name. False if any rice failed."""
     cards = config_dir() / "cosmic"
+    current = active(rices)
     ok = True
     for rice in sorted(rices, key=lambda r: (r.mode, r.slug)):
-        kept = remembered(rice)
+        # the active rice's wallpaper is the one showing; it is only saved when the rice is left
+        showing = desktop_wallpaper(rice.mode) if rice == current else None
+        kept = Path(showing) if showing and Path(showing).is_file() else remembered(rice)
         wall = kept if kept and kept.is_file() else pick_wallpaper(rice)
         with tempfile.TemporaryDirectory(prefix="themebox-card-") as tmp:
             home = Path(tmp)
@@ -895,6 +902,7 @@ def flip(rices: list[Rice], keep_icons: bool = False, pick: bool = False) -> boo
 def go_live(target: Rice, current: Rice | None, rices: list[Rice], keep_icons: bool, chosen: Path | None) -> bool:
     """Make target active and change everything live. False if any step failed."""
     # switch comes first so a running pair --watch already sees the new half
+    showing = icons_in_use()
     log = io.StringIO()
     with contextlib.redirect_stdout(log):
         switched = switch(target, rices, keep_icons, steps=False)
@@ -903,8 +911,13 @@ def go_live(target: Rice, current: Rice | None, rices: list[Rice], keep_icons: b
     messages = [] if switched else [f"{FAILED} some tools, run themebox flip in a terminal to see which"]
     # the wallpaper first: a rice's first import keeps the one showing on its Settings card
     messages += apply_wallpaper(target, current, chosen) + apply_theme(target)
-    # the import sets the icons the .ron names; put back the ones switch chose
-    set_theme_icons(target.mode, value(config_dir() / "cosmic/com.system76.CosmicTk/v1/icon_theme"))
+    # the import sets the icons the .ron names; put back the ones switch chose. A rice with no
+    # icon setting of its own chose none, and CosmicTk still holds the last rice's
+    tk = "cosmic/config/com.system76.CosmicTk/v1/icon_theme"
+    if (target.repo / tk).is_file():
+        set_theme_icons(target.mode, value(config_dir() / tk.replace("config/", "", 1)))
+    elif keep_icons:
+        set_theme_icons(target.mode, showing)
     messages += reload_nvim(target)
     if has_tool(target, "zsh"):
         messages += reload_zsh()
