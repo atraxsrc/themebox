@@ -52,6 +52,8 @@ THEME_NEEDED = ("palette", "spacing", "corner_radii", "gaps", "active_hint")
 THEME_COLORS = ("neutral_tint", "bg_color", "primary_container_bg", "secondary_container_bg", "text_tint",
                 "accent", "success", "warning", "destructive", "window_hint")
 TK_LOOK = ("apply_theme_global", "icon_theme", "interface_font", "monospace_font", "show_maximize", "show_minimize")
+# the CosmicTk settings COSMIC after 1.11.0 reads from the theme instead, by their theme field
+THEME_LOOK = {"icon_theme": "icon_theme", "interface_font": "font", "monospace_font": "mono_font"}
 ZSH_SOURCE = r"^\s*#?\s*(?:source|\.)\s.*"
 ZSH_ANY = re.compile(ZSH_SOURCE + r"(?:cosmic-[a-z0-9]+-theme/zsh/[a-z0-9]+\.zsh|ricing/zsh/colors\.zsh)")
 VARIANT_LIST = re.compile(r"^VARIANTS=\(([^)]*)\)", re.M)
@@ -150,6 +152,55 @@ def config_dir() -> Path:
 
 def mode_file() -> Path:
     return config_dir() / "cosmic/com.system76.CosmicTheme.Mode/v1/is_dark"
+
+
+def current_mode() -> str:
+    return "light" if value(mode_file()) == "false" else "dark"
+
+
+def theme_folder(mode: str, builder: bool = False) -> Path | None:
+    """COSMIC's newest stored theme (or theme builder) folder for a mode, None if it has none."""
+    root = config_dir() / f"cosmic/com.system76.CosmicTheme.{mode.capitalize()}{'.Builder' if builder else ''}"
+    folders = [p for p in root.glob("v*") if p.is_dir() and p.name[1:].isdigit()]
+    return max(folders, key=lambda p: int(p.name[1:]), default=None)
+
+
+def theme_icons(mode: str) -> Path | None:
+    """The icon theme setting inside COSMIC's theme. COSMIC after 1.11.0 reads it there
+    instead of CosmicTk; None on an older COSMIC, whose theme has no such field."""
+    folder = theme_folder(mode)
+    return folder / "icon_theme" if folder and (folder / "icon_theme").is_file() else None
+
+
+def set_theme_icons(mode: str, name: str) -> None:
+    """Put an icon theme into COSMIC's theme and theme builder for one mode, if they hold one."""
+    if not name or theme_icons(mode) is None:
+        return
+    for builder in (False, True):
+        folder = theme_folder(mode, builder)
+        if folder and value(folder / "icon_theme") != name:
+            (folder / "icon_theme").write_text(f'"{name}"')
+
+
+def wallpaper_folder(mode: str) -> Path:
+    """cosmic-bg's settings for one mode. cosmic-bg after 1.11.0 keeps one folder per mode and
+    copies the shared one in only when it starts, so the shared one is for older COSMIC."""
+    own = config_dir() / f"cosmic/com.system76.CosmicBackground.{mode.capitalize()}/v1"
+    return own if own.is_dir() else shared_wallpaper_folder()
+
+
+def shared_wallpaper_folder() -> Path:
+    return config_dir() / "cosmic/com.system76.CosmicBackground/v1"
+
+
+def seed_wallpaper(folder: Path) -> None:
+    """Fill a mode's empty wallpaper folder from the shared one, as cosmic-bg does when it starts."""
+    shared = shared_wallpaper_folder()
+    if folder == shared or (folder / "all").is_file() or not (shared / "all").is_file():
+        return
+    for key in ("all", "same-on-all"):
+        if (shared / key).is_file() and not (folder / key).is_file():
+            shutil.copyfile(shared / key, folder / key)
 
 
 def active(rices: list[Rice]) -> Rice | None:
@@ -256,15 +307,21 @@ def apply_cosmic(rice: Rice, keep_icons: bool) -> None:
             print(f"  cosmic: terminal scheme stays {have}")
             continue
         if src.name == "icon_theme":
-            if keep_icons:
-                print(f"  cosmic: icons stay {have or 'default'} (--keep-icons)")
+            have = icons_in_use()
+            stay = (" (--keep-icons)" if keep_icons
+                    else "" if have.startswith(want.rsplit("-", 1)[0] + "-")
+                    else f", {want} is not installed (./icons/install.sh)" if not icons_installed(want)
+                    else None)
+            if stay is not None:
+                print(f"  cosmic: icons stay {have or 'default'}{stay}")
+                if have and have != value(dest):  # CosmicTk is what flip puts back after the import
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    if dest.is_file():
+                        backup(dest)
+                    dest.write_text(f'"{have}"')
+                set_theme_icons(rice.mode, have)
                 continue
-            if have.startswith(want.rsplit("-", 1)[0] + "-"):
-                print(f"  cosmic: icons stay {have}")
-                continue
-            if not icons_installed(want):
-                print(f"  cosmic: icons stay {have or 'default'}, {want} is not installed (./icons/install.sh)")
-                continue
+            set_theme_icons(rice.mode, want)
         backup_copy(src, dest)
         print(f"  cosmic: {rel}")
     mode_file().parent.mkdir(parents=True, exist_ok=True)
@@ -515,8 +572,11 @@ def remembered(rice: Rice) -> Path | None:
     return Path(path.read_text()) if path.is_file() else None
 
 
-def desktop_wallpaper() -> str | None:
-    entry = config_dir() / "cosmic/com.system76.CosmicBackground/v1/all"
+def desktop_wallpaper(mode: str | None = None) -> str | None:
+    """The wallpaper on all monitors in a mode, the one showing now by default."""
+    entry = wallpaper_folder(mode or current_mode()) / "all"
+    if not entry.is_file():
+        entry = shared_wallpaper_folder() / "all"  # cosmic-bg has not seeded this mode yet
     found = WALLPAPER.search(entry.read_text()) if entry.is_file() else None
     return found.group(1).replace("\\\\", "\\") if found else None
 
@@ -531,24 +591,25 @@ def pick_wallpaper(rice: Rice) -> Path | None:
 
 
 def apply_wallpaper(rice: Rice, previous: Rice | None, chosen: Path | None = None) -> list[str]:
-    """Change only the path in cosmic-bg's entry for all monitors.
+    """Change only the path in cosmic-bg's entry for all monitors, in the rice's mode.
 
     Uses chosen if given, else what this rice last had, else its default.
     Staying on the same rice keeps the wallpaper unless one was chosen.
     """
-    folder = config_dir() / "cosmic/com.system76.CosmicBackground/v1"
+    folder = wallpaper_folder(rice.mode)
+    seed_wallpaper(folder)
     manual = f"Wallpaper: Settings → Wallpaper → a file from {rice.repo}/backgrounds"
     entry = folder / "all"
     if value(folder / "same-on-all") == "false" or not entry.is_file():
         return [manual]
     text = entry.read_text()
-    current = desktop_wallpaper()
-    if current is None:
+    if WALLPAPER.search(text) is None:
         return [manual]
     if chosen is None and previous == rice:
         return []
-    if previous:
-        remember(previous, current)
+    left = desktop_wallpaper(previous.mode) if previous else None
+    if previous and left:
+        remember(previous, left)
     kept = remembered(rice)
     chosen = chosen or (kept if kept and kept.is_file() else pick_wallpaper(rice))
     if chosen is None:
@@ -567,7 +628,7 @@ def save_wallpaper(rice: Rice, path: Path, is_active: bool) -> list[str]:
 
 def print_wallpapers(rice: Rice, is_active: bool) -> None:
     """The rice's wallpapers by short name, * marks the one in use or saved."""
-    marked = desktop_wallpaper() if is_active else remembered(rice)
+    marked = desktop_wallpaper(rice.mode) if is_active else remembered(rice)
     for path in backgrounds(rice):
         print(f"{'*' if str(path) == str(marked) else ' '} {short_name(rice, path)}")
 
@@ -597,9 +658,7 @@ def ask_wallpaper(rice: Rice) -> Path | None:
 
 def stored_theme(mode: str) -> dict[str, str]:
     """COSMIC's theme settings, one file per field, from its newest version folder."""
-    root = config_dir() / f"cosmic/com.system76.CosmicTheme.{mode.capitalize()}.Builder"
-    folders = [p for p in root.glob("v*") if p.is_dir() and p.name[1:].isdigit()]
-    newest = max(folders, key=lambda p: int(p.name[1:]), default=None)
+    newest = theme_folder(mode, builder=True)
     files = newest.iterdir() if newest else ()
     return {p.name: p.read_text().strip() for p in files if p.is_file() and re.fullmatch(r"[a-z0-9_]+", p.name)}
 
@@ -616,10 +675,10 @@ def theme_ron(mode: str, name: str) -> str:
     return f"(\n{body})\n"
 
 
-def copy_wallpaper(repo: Path, slug: str) -> str | None:
+def copy_wallpaper(repo: Path, slug: str, mode: str) -> str | None:
     """Copy the desktop's wallpaper into repo/backgrounds. Its file name, None if there is no one file."""
-    folder = config_dir() / "cosmic/com.system76.CosmicBackground/v1"
-    current = desktop_wallpaper()
+    folder = wallpaper_folder(mode)
+    current = desktop_wallpaper(mode)
     if value(folder / "same-on-all") == "false" or current is None or not Path(current).is_file():
         return None
     copied = repo / "backgrounds" / f"{slug}-{Path(current).name}"
@@ -637,9 +696,10 @@ def capture(repos: Path, wanted: str) -> None:
     target = repos / f"cosmic-{slug}-theme"
     if target.exists():
         raise Error(f"{target} already exists, pick another name")
-    mode = "light" if value(mode_file()) == "false" else "dark"
+    mode = current_mode()
     ron = f"{name.replace(' ', '')}.ron"
     theme = theme_ron(mode, name)
+    stored = stored_theme(mode)
     repos.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=repos, prefix=".capture-") as tmp:
         build = Path(tmp) / "rice"
@@ -647,11 +707,15 @@ def capture(repos: Path, wanted: str) -> None:
         (build / "cosmic" / ron).write_text(theme)
         for setting in TK_LOOK:
             live = config_dir() / "cosmic/com.system76.CosmicTk/v1" / setting
-            if live.is_file():
-                saved = build / "cosmic/config/com.system76.CosmicTk/v1" / setting
+            saved = build / "cosmic/config/com.system76.CosmicTk/v1" / setting
+            in_theme = stored.get(THEME_LOOK.get(setting, ""))  # newer COSMIC keeps these in the theme
+            if in_theme is not None or live.is_file():
                 saved.parent.mkdir(parents=True, exist_ok=True)
+            if in_theme is not None:
+                saved.write_text(in_theme)
+            elif live.is_file():
                 shutil.copyfile(live, saved)
-        wallpaper = copy_wallpaper(build, slug)
+        wallpaper = copy_wallpaper(build, slug, mode)
         (build / "rice.toml").write_text(f'name = "{name}"\nmode = "{mode}"\ntheme = "{ron}"\n')
         build.rename(target)
     print(f"Saved the current {mode} theme as {name} in {target}")
@@ -761,7 +825,10 @@ def go_live(target: Rice, current: Rice | None, rices: list[Rice], keep_icons: b
     if not switched:
         print(log.getvalue())
     messages = [] if switched else [f"{FAILED} some tools, run themebox flip in a terminal to see which"]
-    messages += apply_theme(target) + apply_wallpaper(target, current, chosen) + reload_nvim(target)
+    messages += apply_theme(target)
+    # the import sets the icons the .ron names; put back the ones switch chose
+    set_theme_icons(target.mode, value(config_dir() / "cosmic/com.system76.CosmicTk/v1/icon_theme"))
+    messages += apply_wallpaper(target, current, chosen) + reload_nvim(target)
     if has_tool(target, "zsh"):
         messages += reload_zsh()
     messages += leftovers(target)
@@ -840,7 +907,9 @@ def cursor_in_use() -> str:
 
 
 def icons_in_use() -> str:
-    return value(config_dir() / "cosmic/com.system76.CosmicTk/v1/icon_theme")
+    """The icon theme showing now: the theme's own on COSMIC after 1.11.0, else CosmicTk's."""
+    entry = theme_icons(current_mode()) or config_dir() / "cosmic/com.system76.CosmicTk/v1/icon_theme"
+    return value(entry)
 
 
 def cursor_name(rice: Rice, variant: str) -> str:
@@ -922,7 +991,7 @@ class Choices:
             return []
         if tab == "Wallpaper":
             live = rice == self.current
-            marked = desktop_wallpaper() if live else remembered(rice)
+            marked = desktop_wallpaper(rice.mode) if live else remembered(rice)
             return [(None, "Keep current" if live else "Saved or default", "")] + [
                 (path, short_name(rice, path), "in use" if live and str(path) == str(marked)
                  else "saved" if str(path) == str(marked) else "") for path in backgrounds(rice)]
