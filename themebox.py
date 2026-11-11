@@ -248,9 +248,18 @@ def install(rice: Rice, tool: str) -> bool:
     return done.returncode == 0
 
 
+def icon_roots() -> tuple[Path, Path]:
+    return Path.home() / ".local/share/icons", Path("/usr/share/icons")
+
+
 def icons_installed(name: str) -> bool:
-    roots = (Path.home() / ".local/share/icons", Path("/usr/share/icons"))
-    return any((root / name).is_dir() for root in roots)
+    return any((root / name).is_dir() for root in icon_roots())
+
+
+def installed_variants(prefix: str) -> list[str]:
+    """Installed icon packs whose name starts with prefix, Dark and Ink first."""
+    names = {p.name for root in icon_roots() if root.is_dir() for p in root.glob(f"{prefix}*") if p.is_dir()}
+    return sorted(names, key=lambda n: (not n.endswith(("-Dark", "-Ink")), n))
 
 
 def stored_schemes(rice: Rice) -> Path:
@@ -308,20 +317,26 @@ def apply_cosmic(rice: Rice, keep_icons: bool) -> None:
             continue
         if src.name == "icon_theme":
             have = icons_in_use()
+            prefix = want.rsplit("-", 1)[0] + "-"
+            if not keep_icons and not have.startswith(prefix) and not icons_installed(want):
+                # another colour of the rice's own pack beats keeping COSMIC's grey default
+                want = next(iter(installed_variants(prefix)), want)
             stay = (" (--keep-icons)" if keep_icons
-                    else "" if have.startswith(want.rsplit("-", 1)[0] + "-")
+                    else "" if have.startswith(prefix)
                     else f", {want} is not installed (./icons/install.sh)" if not icons_installed(want)
                     else None)
             if stay is not None:
                 print(f"  cosmic: icons stay {have or 'default'}{stay}")
-                if have and have != value(dest):  # CosmicTk is what flip puts back after the import
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    if dest.is_file():
-                        backup(dest)
-                    dest.write_text(f'"{have}"')
-                set_theme_icons(rice.mode, have)
-                continue
-            set_theme_icons(rice.mode, want)
+            chosen = have if stay is not None else want
+            if chosen and chosen != value(dest):  # CosmicTk is what flip puts back after the import
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                if dest.is_file():
+                    backup(dest)
+                dest.write_text(f'"{chosen}"')
+                if stay is None:
+                    print(f"  cosmic: icons {chosen}")
+            set_theme_icons(rice.mode, chosen)
+            continue
         backup_copy(src, dest)
         print(f"  cosmic: {rel}")
     mode_file().parent.mkdir(parents=True, exist_ok=True)

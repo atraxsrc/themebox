@@ -119,6 +119,22 @@ class Icons(Newer):
         self.assertEqual(self.icons(PARTS[2]), '"Papirus"')
         self.assertEqual((self.conf / "cosmic/com.system76.CosmicTk/v1/icon_theme").read_text(), '"Papirus"')
 
+    def test_a_missing_default_falls_back_to_another_colour_of_the_pack(self):
+        # COSMIC's own grey icons were showing, as after an import reset them
+        icons = self.home / ".local/share/icons"
+        (icons / "Kanagawa-Dossier-Orange").rmdir()
+        (icons / "Kanagawa-Dossier-Olive").mkdir()
+        (icons / "Kanagawa-Dossier-Dark").mkdir()
+        self.switch("dossier", steps=False)
+        self.assertEqual(self.icons(PARTS[2]), '"Kanagawa-Dossier-Dark"')
+        self.assertEqual((self.conf / "cosmic/com.system76.CosmicTk/v1/icon_theme").read_text(),
+                         '"Kanagawa-Dossier-Dark"')
+
+    def test_no_colour_of_the_pack_installed_keeps_what_shows(self):
+        (self.home / ".local/share/icons/Kanagawa-Dossier-Orange").rmdir()
+        self.switch("dossier", steps=False)
+        self.assertEqual(self.icons(PARTS[2]), '"Cosmic"')
+
     def test_icons_in_use_come_from_the_theme(self):
         (self.conf / "cosmic" / PARTS[0] / "icon_theme").write_text('"Kanagawa-Noir-Sage"')
         self.assertEqual(cr.icons_in_use(), "Kanagawa-Noir-Sage")
