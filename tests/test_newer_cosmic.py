@@ -147,6 +147,80 @@ class Icons(Newer):
         self.assertIn("Kanagawa-Dossier-Orange", (self.conf / "cosmic/com.system76.CosmicTk/v1/icon_theme").read_text())
 
 
+class Cards(Newer):
+    """Settings files every import as a card named after the palette, with the wallpaper showing then."""
+
+    def setUp(self):
+        super().setUp()
+        # what cosmic-settings does with an import: a card folder named after the palette,
+        # holding the theme and the wallpaper showing in that home
+        self.stub("cosmic-settings", f'''echo "cosmic-settings $* | $HOME" >> "{self.log}"
+name=$(grep -m1 -o 'name: "[^"]*"' "$3" | cut -d'"' -f2)
+slug=$(printf '%s' "$name" | tr 'A-Z ' 'a-z-')
+cards="${{XDG_CONFIG_HOME:-$HOME/.config}}/cosmic"
+mkdir -p "$cards/com.system76.CosmicThemeBundle.$slug.Theme/v2" "$cards/com.system76.CosmicThemeBundle.$slug.Background/v1"
+printf '"%s"' "$name" > "$cards/com.system76.CosmicThemeBundle.$slug.Theme/v2/name"
+for f in "$cards"/com.system76.CosmicBackground.*/v1/all; do
+  [ -f "$f" ] && cp "$f" "$cards/com.system76.CosmicThemeBundle.$slug.Background/v1/all"
+done
+''')
+        for rice in self.rices():
+            (rice.repo / "cosmic" / rice.ron).write_text(
+                f'(\n    palette: {rice.mode.capitalize()}((\n        name: "{rice.slug}-{rice.mode}",\n    )),\n)\n')
+
+    def card(self, slug, part="Theme"):
+        return self.conf / f"cosmic/com.system76.CosmicThemeBundle.{slug}.{part}"
+
+    def cards(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ok = cr.make_cards(self.rices())
+        return ok, out.getvalue()
+
+    def test_the_import_names_the_palette_after_the_rice(self):
+        path = cr.named_ron(cr.find(self.rices(), "noir"), self.root)
+        self.assertIn('name: "Noir"', path.read_text())
+        self.assertNotIn("noir-dark", path.read_text())
+
+    def test_every_rice_gets_a_card_with_its_wallpaper(self):
+        ok, out = self.cards()
+        self.assertTrue(ok, out)
+        self.assertEqual((self.card("noir") / "v2/name").read_text(), '"Noir"')
+        self.assertEqual((self.card("dossier") / "v2/name").read_text(), '"Dossier"')
+        wall = (self.card("dossier", "Background") / "v1/all").read_text()
+        self.assertIn(str(self.dossier / "backgrounds/dossier-anime.png"), wall)
+
+    def test_cards_change_nothing_live(self):
+        before = {p: p.read_text() for p in (self.conf / "cosmic").rglob("*") if p.is_file()}
+        self.cards()
+        after = {p: p.read_text() for p in (self.conf / "cosmic").rglob("*") if p.is_file()
+                 and "CosmicThemeBundle" not in str(p)}
+        self.assertEqual(after, before)
+        self.assertNotIn(str(self.home), self.stub_log().replace(str(self.root / "repos"), ""))
+
+    def test_a_saved_wallpaper_goes_on_the_card(self):
+        cr.remember(cr.find(self.rices(), "noir"), str(self.noir / "backgrounds/noir-city.png"))
+        self.cards()
+        self.assertIn("noir-city.png", (self.card("noir", "Background") / "v1/all").read_text())
+
+    def test_running_again_replaces_the_card(self):
+        self.cards()
+        stale = self.card("noir") / "v2/stale"
+        stale.write_text("old")
+        self.cards()
+        self.assertFalse(stale.exists())
+
+    def test_a_rice_cosmic_settings_cannot_import_is_reported(self):
+        self.stub("cosmic-settings", "", code=1)
+        ok, out = self.cards()
+        self.assertFalse(ok)
+        self.assertIn("failed:", out)
+
+    def test_flip_sets_the_wallpaper_before_the_import(self):
+        self.flip()
+        self.assertIn("dossier-anime.png", (self.card("dossier", "Background") / "v1/all").read_text())
+
+
 class Capture(CaptureBase):
     def test_fonts_and_icons_come_from_the_theme_not_stale_cosmictk(self):
         tk = self.conf / "cosmic/com.system76.CosmicTk/v1"

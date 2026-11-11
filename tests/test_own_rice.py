@@ -145,7 +145,7 @@ class Skipping(OwnBase):
         self.switch("mine", steps=False)
         ok, out = self.flip()
         self.assertTrue(ok, out)
-        self.assertIn("MineDay.ron", self.stub_log())
+        self.assertIn("/mineday.ron |", self.stub_log())
         self.assertNotIn("Firefox", out)
         self.assertNotIn("install-shell", out)
 

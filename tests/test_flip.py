@@ -74,7 +74,7 @@ class Theme(FlipBase):
     def test_flip_moves_to_the_pair_and_imports_its_theme(self):
         self.flip()
         self.assertEqual(cr.active(self.rices()).slug, "dossier")
-        self.assertIn(f"appearance import {self.dossier}/cosmic/Dossier.ron", self.stub_log())
+        self.assertRegex(self.stub_log(), r"appearance import \S+/dossier\.ron \|")
 
     def test_link_and_mode_are_set_before_the_import(self):
         self.flip()

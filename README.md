@@ -102,8 +102,14 @@ themebox switch noir --pick  # choose the wallpaper from a list, works on flip t
 themebox choose noir k3day   # flip between these two instead of a rice's own pair
 themebox choose --reset      # back to each rice's own pair
 themebox capture Mine        # save the current theme and wallpaper as a new rice
+themebox cards               # add every rice to Settings → Appearance as a theme card
 themebox install-shell       # once: let flip reload open zsh shells
 ```
+
+`cards` puts every rice in Settings → Desktop → Appearance as a card with its own wallpaper, in the
+Dark or Light list. Clicking one there changes the COSMIC theme, icons and wallpaper only; `flip` and
+`switch` still do the terminals, editors and the rest. Run it again after changing a rice or saving
+another wallpaper, it replaces the cards it made. Needs COSMIC after 1.11.0.
 
 `flip` moves to the other half of the active rice. It applies the configs, imports the COSMIC theme,
 sets the matching wallpaper, recolours running Neovims and reloads registered zsh shells. Then it sends

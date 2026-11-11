@@ -550,12 +550,73 @@ def run_quiet(cmd: list[str], timeout: float = 30) -> bool:
     return done.returncode == 0
 
 
+def named_ron(rice: Rice, folder: Path) -> Path:
+    """The rice's .ron with its palette named after the rice. COSMIC after 1.11.0 files each import
+    as a card in Settings → Appearance under that name, so every import of a rice lands on one card."""
+    name = rice.name.replace("\\", "\\\\").replace('"', '\\"')
+    text = (rice.repo / "cosmic" / rice.ron).read_text()
+    path = folder / f"{rice.slug}.ron"
+    path.write_text(re.sub(r'name: "(?:[^"\\]|\\.)*"', lambda _: f'name: "{name}"', text, count=1))
+    return path
+
+
 def apply_theme(rice: Rice) -> list[str]:
     """Import the COSMIC theme, which also sets the desktop's light or dark mode."""
     path = rice.repo / "cosmic" / rice.ron
-    if run_quiet(["cosmic-settings", "appearance", "import", str(path)]):
-        return []
+    with tempfile.TemporaryDirectory(prefix="themebox-") as tmp:
+        # a missing file goes as it is, so cosmic-settings says what is wrong
+        source = named_ron(rice, Path(tmp)) if path.is_file() else path
+        if run_quiet(["cosmic-settings", "appearance", "import", str(source)]):
+            return []
     return [f"{FAILED} theme import, in Settings → Desktop → Appearance import {path}"]
+
+
+def wallpaper_entry(path: Path) -> str:
+    """cosmic-bg's entry for all monitors showing one picture."""
+    escaped = str(path).replace("\\", "\\\\").replace('"', '\\"')
+    return (f'(\n    output: "all",\n    source: Path("{escaped}"),\n    filter_by_theme: true,\n'
+            '    rotation_frequency: 300,\n    transition_duration: 500,\n    filter_method: Lanczos,\n'
+            '    scaling_mode: Zoom,\n    sampling_method: Alphanumeric,\n)')
+
+
+def make_cards(rices: list[Rice]) -> bool:
+    """A card in Settings → Appearance for every rice, with its theme and wallpaper.
+
+    Each card is made by cosmic-settings itself in a throwaway home, so nothing live changes,
+    then copied in over any card of the same name. False if any rice failed."""
+    cards = config_dir() / "cosmic"
+    ok = True
+    for rice in sorted(rices, key=lambda r: (r.mode, r.slug)):
+        kept = remembered(rice)
+        wall = kept if kept and kept.is_file() else pick_wallpaper(rice)
+        with tempfile.TemporaryDirectory(prefix="themebox-card-") as tmp:
+            home = Path(tmp)
+            made = home / ".config/cosmic"
+            if wall:
+                bg = made / f"com.system76.CosmicBackground.{rice.mode.capitalize()}/v1"
+                bg.mkdir(parents=True)
+                (bg / "all").write_text(wallpaper_entry(wall))
+                (bg / "same-on-all").write_text("true")
+            env = {k: v for k, v in os.environ.items() if k in ("PATH", "LANG", "XDG_DATA_DIRS")}
+            env.update(HOME=str(home), XDG_CONFIG_HOME=str(home / ".config"))
+            try:
+                done = subprocess.run(["cosmic-settings", "appearance", "import", str(named_ron(rice, home))],
+                                      env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                      stderr=subprocess.DEVNULL, timeout=60).returncode == 0
+            except (OSError, subprocess.SubprocessError):
+                done = False
+            parts = sorted(made.glob("com.system76.CosmicThemeBundle.*")) if done else []
+            if not parts:
+                print(f"  {rice.name}: {FAILED} cosmic-settings made no card")
+                ok = False
+                continue
+            for part in parts:
+                dest = cards / part.name
+                if dest.is_dir():
+                    shutil.rmtree(dest)
+                shutil.copytree(part, dest)
+            print(f"  {rice.name}: {short_name(rice, wall) if wall else 'no wallpaper'}")
+    return ok
 
 
 def backgrounds(rice: Rice) -> list[Path]:
@@ -840,10 +901,11 @@ def go_live(target: Rice, current: Rice | None, rices: list[Rice], keep_icons: b
     if not switched:
         print(log.getvalue())
     messages = [] if switched else [f"{FAILED} some tools, run themebox flip in a terminal to see which"]
-    messages += apply_theme(target)
+    # the wallpaper first: a rice's first import keeps the one showing on its Settings card
+    messages += apply_wallpaper(target, current, chosen) + apply_theme(target)
     # the import sets the icons the .ron names; put back the ones switch chose
     set_theme_icons(target.mode, value(config_dir() / "cosmic/com.system76.CosmicTk/v1/icon_theme"))
-    messages += apply_wallpaper(target, current, chosen) + reload_nvim(target)
+    messages += reload_nvim(target)
     if has_tool(target, "zsh"):
         messages += reload_zsh()
     messages += leftovers(target)
@@ -1383,6 +1445,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("capture", help="save the current theme and wallpaper as a new rice")
     p.add_argument("name")
     sub.add_parser("install-shell", help="let flip reload open zsh shells")
+    sub.add_parser("cards", help="add every rice to Settings → Appearance as a theme card")
     args = ap.parse_args(argv)
 
     repos = Path(os.environ.get("THEMEBOX_REPOS") or Path(__file__).resolve().parent.parent).resolve()
@@ -1427,6 +1490,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"flip goes between {args.rices[0]} and {args.rices[1]}")
             else:
                 raise Error("usage: themebox choose <dark> <light>, or --reset")
+        elif args.command == "cards":
+            print(f"Adding {len(rices)} rices to Settings → Desktop → Appearance")
+            return 0 if make_cards(rices) else 1
         elif args.command == "install-shell":
             print("Added to ~/.zshrc, new shells will reload" if install_shell() else "Already in ~/.zshrc")
         elif args.command == "flip":
