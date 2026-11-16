@@ -124,7 +124,7 @@ saved one. With different wallpapers per monitor, themebox leaves them alone and
 `install-shell` adds one line to `~/.zshrc`. Terminals opened before that line existed are not reloaded.
 Nothing is closed either way.
 
-`switch` does what a rice's `scripts/switch.sh` does and backs up what it replaces (`*.bak`). If one
+`switch` runs a rice's installers and backs up what it replaces (`*.bak`). If one
 tool fails the others still run, the failures are listed at the end and the exit code is 1. It finishes
 with the steps COSMIC only allows by hand, such as importing the theme.
 
@@ -202,8 +202,8 @@ Rices made before `rice.toml` still work: themebox reads the block at the top of
 python3 -m unittest discover -s tests
 ```
 
-`tests/test_parity.py` runs every rice through both its `switch.sh` and this CLI in throwaway home
-folders and compares every file they leave behind.
+`tests/test_parity.py` compares the CLI with a rice's own `scripts/switch.sh` in throwaway home
+folders. The published rices no longer ship that script, so it is skipped unless a rice has one.
 
 ## License
 
